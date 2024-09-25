@@ -199,11 +199,22 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
         itemCount: _procedures.length,
         itemBuilder: (context, index) {
           return ProcedureCard(
-              procedure: _procedures[index], isDesktop: isDesktop);
+            procedure: _procedures[index],
+            isDesktop: isDesktop,
+            onBookmark: () {
+              setState(() {
+                // Add the procedure to bookmarked list if not already added
+                if (!_bookmarkedProcedures.contains(_procedures[index])) {
+                  _bookmarkedProcedures.add(_procedures[index]);
+                }
+              });
+            },
+          );
         },
       ),
     );
   }
+
 
   Widget _buildPersonalProceduresGrid(bool isDesktop) {
     return Padding(
@@ -221,6 +232,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                   procedure: _bookmarkedProcedures[index],
                   isDesktop: isDesktop,
                   isPersonal: true,
+                  onBookmark: () {},
                 );
               },
             )

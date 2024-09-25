@@ -4,13 +4,15 @@ class ProcedureCard extends StatelessWidget {
   final String procedure;
   final bool isDesktop;
   final bool isPersonal;
+  final VoidCallback onBookmark; // Add callback for bookmarking
 
   const ProcedureCard({
-    Key? key,
+    super.key,
     required this.procedure,
     required this.isDesktop,
     this.isPersonal = false,
-  }) : super(key: key);
+    required this.onBookmark, // Required callback for bookmarking
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -25,9 +27,7 @@ class ProcedureCard extends StatelessWidget {
             trailing: IconButton(
               icon: Icon(isPersonal ? Icons.edit : Icons.bookmark_add,
                   color: Colors.blue),
-              onPressed: () {
-                // Add to bookmarks or edit personal procedure
-              },
+              onPressed: onBookmark, // Call the callback on bookmark
             ),
             onTap: () {
               // Expand procedure details or open detailed view
