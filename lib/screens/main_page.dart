@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import '../widgets/procedure_card.dart';
 import './procedure_search_delegate.dart';
@@ -9,8 +10,7 @@ class MainPage extends StatefulWidget {
   _MainPageState createState() => _MainPageState();
 }
 
-class _MainPageState extends State<MainPage>
-    with SingleTickerProviderStateMixin {
+class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   late TabController _tabController;
   final List<String> _categories = ["Maintenance", "Safety", "Calibration"];
   final List<String> _procedures = [
@@ -18,21 +18,59 @@ class _MainPageState extends State<MainPage>
     "Procedure 2",
     "Procedure 3"
   ];
-  final List<String> _bookmarkedProcedures =
-      []; // User’s personal list of bookmarked procedures
+  final List<String> _bookmarkedProcedures = [];
+  bool _isAddingCategory = false; // Flag to toggle category input field
+  final TextEditingController _categoryController = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
 
   @override
   void initState() {
     super.initState();
+    _initializeTabController();
+
+    _focusNode.addListener(() {
+      if (!_focusNode.hasFocus && _isAddingCategory) {
+        setState(() {
+          _isAddingCategory = false; // Abort adding when focus is lost
+        });
+      }
+    });
+  }
+
+  void _initializeTabController() {
     _tabController = TabController(
+      length: _categories.length + 1, // +1 for My Procedures
+      vsync: this,
+    );
+  }
+
+  void _updateTabController() {
+    setState(() {
+      _tabController.dispose();
+      _tabController = TabController(
         length: _categories.length + 1,
-        vsync: this); // +1 for My Procedures tab
+        vsync: this,
+      );
+    });
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _categoryController.dispose();
+    _focusNode.dispose();
     super.dispose();
+  }
+
+  void _addNewCategory(String newCategory) {
+    if (newCategory.isNotEmpty) {
+      setState(() {
+        _categories.add(newCategory);
+        _isAddingCategory = false;
+        _categoryController.clear();
+        _updateTabController();
+      });
+    }
   }
 
   @override
@@ -42,32 +80,71 @@ class _MainPageState extends State<MainPage>
     return Scaffold(
       appBar: AppBar(
         title: const Text('MIFtek Assist'),
-        bottom: TabBar(
-          controller: _tabController,
-          isScrollable: true,
-          tabs: [
-            Tab(
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors
-                      .deepPurple[400], // Distinct color for "My Procedures"
-                  borderRadius: BorderRadius.circular(
-                      20), // Rounded corners for visual distinction
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(50.0),
+          child: Container(
+            height: 50,
+            child: Row(
+              children: [
+                Expanded(
+                  child: TabBar(
+                    controller: _tabController,
+                    isScrollable: true,
+                    tabs: [
+                      Tab(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.deepPurple[400],
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Text(
+                            "My Procedures",
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ),
+                      ..._categories.map((category) => Tab(text: category)),
+                    ],
+                  ),
                 ),
-                child: const Text(
-                  "My Procedures",
-                  style:
-                      TextStyle(color: Colors.white), // White text to stand out
-                ),
-              ),
+                if (_isAddingCategory) // Show the input field when adding a category
+                  Container(
+                    width: 200,
+                    margin: const EdgeInsets.only(right: 10),
+                    child: TextField(
+                      controller: _categoryController,
+                      focusNode: _focusNode,
+                      autofocus: true,
+                      style: const TextStyle(fontSize: 16),
+                      decoration: InputDecoration(
+                        hintText: 'New Category',
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.check),
+                          onPressed: () {
+                            _addNewCategory(_categoryController.text);
+                          },
+                        ),
+                        border: const OutlineInputBorder(),
+                      ),
+                      onSubmitted: (value) {
+                        _addNewCategory(value);
+                      },
+                    ),
+                  )
+                else // Show the plus icon when not adding a category
+                  IconButton(
+                    icon: const Icon(Icons.add),
+                    onPressed: () {
+                      setState(() {
+                        _isAddingCategory = true; // Start adding category
+                      });
+                    },
+                  ),
+              ],
             ),
-            ..._categories.map((category) => Tab(text: category)),
-            const Tab(
-              child: Text('+', style: TextStyle(fontSize: 18)),
-            ),
-          ],
+          ),
         ),
         actions: [
           IconButton(
@@ -82,15 +159,24 @@ class _MainPageState extends State<MainPage>
           ),
         ],
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildPersonalProceduresGrid(
-              isDesktop), // "My Procedures" tab content
-          ..._categories.map((category) {
-            return _buildProceduresGrid(isDesktop);
-          }),
-        ],
+      body: GestureDetector(
+        onTap: () {
+          if (_isAddingCategory) {
+            setState(() {
+              _isAddingCategory = false; // Close input when tapping outside
+            });
+          }
+        },
+        child: TabBarView(
+          controller: _tabController,
+          dragStartBehavior: DragStartBehavior.start,
+          children: [
+            _buildPersonalProceduresGrid(isDesktop),
+            ..._categories.map((category) {
+              return _buildProceduresGrid(isDesktop);
+            }),
+          ],
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -132,9 +218,10 @@ class _MainPageState extends State<MainPage>
               itemCount: _bookmarkedProcedures.length,
               itemBuilder: (context, index) {
                 return ProcedureCard(
-                    procedure: _bookmarkedProcedures[index],
-                    isDesktop: isDesktop,
-                    isPersonal: true);
+                  procedure: _bookmarkedProcedures[index],
+                  isDesktop: isDesktop,
+                  isPersonal: true,
+                );
               },
             )
           : Center(
