@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/procedure_card.dart';
 import './procedure_search_delegate.dart';
 
 class MainPage extends StatefulWidget {
@@ -111,7 +112,8 @@ class _MainPageState extends State<MainPage>
         ),
         itemCount: _procedures.length,
         itemBuilder: (context, index) {
-          return _buildProcedureCard(_procedures[index], isDesktop);
+          return ProcedureCard(
+              procedure: _procedures[index], isDesktop: isDesktop);
         },
       ),
     );
@@ -129,8 +131,9 @@ class _MainPageState extends State<MainPage>
               ),
               itemCount: _bookmarkedProcedures.length,
               itemBuilder: (context, index) {
-                return _buildProcedureCard(
-                    _bookmarkedProcedures[index], isDesktop,
+                return ProcedureCard(
+                    procedure: _bookmarkedProcedures[index],
+                    isDesktop: isDesktop,
                     isPersonal: true);
               },
             )
@@ -140,50 +143,6 @@ class _MainPageState extends State<MainPage>
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
             ),
-    );
-  }
-
-  Widget _buildProcedureCard(String procedure, bool isDesktop,
-      {bool isPersonal = false}) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ListTile(
-            title: Text(procedure),
-            trailing: IconButton(
-              icon: Icon(isPersonal ? Icons.edit : Icons.bookmark_add,
-                  color: Colors.blue),
-              onPressed: () {
-                if (isPersonal) {
-                  // Edit personal procedure
-                } else {
-                  // Bookmark procedure
-                  setState(() {
-                    _bookmarkedProcedures.add(procedure);
-                  });
-                }
-              },
-            ),
-            onTap: () {
-              // Expand procedure details or open detailed view
-            },
-          ),
-          // Step Preview (Collapsible section)
-          const Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Step 1: Get floor soap'),
-                Text('Step 2: Pour soap into bucket'),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
