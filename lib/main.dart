@@ -1,4 +1,3 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -13,19 +12,14 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'MIFtek Assist',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.lightBlue),
-        useMaterial3: true,
-        fontFamily: 'Roboto',
+        primarySwatch: Colors.blue,
+        brightness: Brightness.light,
       ),
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
+      ),
+      themeMode: ThemeMode.system,
       home: const MainPage(),
-      scrollBehavior: const MaterialScrollBehavior().copyWith(
-        dragDevices: {
-          PointerDeviceKind.mouse,
-          PointerDeviceKind.touch,
-          PointerDeviceKind.stylus,
-          PointerDeviceKind.unknown
-        },
-      ),
     );
   }
 }
@@ -34,123 +28,237 @@ class MainPage extends StatefulWidget {
   const MainPage({super.key});
 
   @override
-  State<MainPage> createState() => _MainPageState();
+  _MainPageState createState() => _MainPageState();
 }
 
-class _MainPageState extends State<MainPage> {
-  // Placeholder data for the procedure list
+class _MainPageState extends State<MainPage>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  final List<String> _categories = ["Maintenance", "Safety", "Calibration"];
   final List<String> _procedures = [
     "Procedure 1",
     "Procedure 2",
     "Procedure 3"
   ];
+  final List<String> _bookmarkedProcedures =
+      []; // User’s personal list of bookmarked procedures
 
-  // Method to add a new procedure
-  void _addProcedure() {
-    setState(() {
-      _procedures.add('New Procedure');
-    });
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(
+        length: _categories.length + 1,
+        vsync: this); // +1 for My Procedures tab
   }
 
-  // Method to remove a procedure
-  void _removeProcedure(int index) {
-    setState(() {
-      _procedures.removeAt(index);
-    });
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = MediaQuery.of(context).size.width > 600;
+
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        title: const Text(
-          'MIFtek Assist',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 24,
-            fontWeight: FontWeight.w400,
-          ),
-          textAlign: TextAlign.left,
-        ),
-        centerTitle: false,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Title and FAB in the same row
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Procedures',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 30,
-                    fontWeight: FontWeight.w700, // Bigger font weight for title
-                  ),
-                ),
-                FloatingActionButton(
-                  onPressed: _addProcedure,
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  tooltip: 'Add Procedure',
-                  foregroundColor: Colors.white,
-                  hoverColor: Colors.blue[600],
-                  splashColor: Colors.white,
-                  child: const Icon(Icons.add, size: 28),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            // List of Procedures
-            Expanded(
-              child: ListView.builder(
-                physics: const AlwaysScrollableScrollPhysics(),
-                itemCount: _procedures.length,
-                itemBuilder: (context, index) {
-                  return Card(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15.0),
-                    ),
-                    elevation: 6,
-                    margin: const EdgeInsets.symmetric(vertical: 10.0),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.all(16.0),
-                      title: Text(
-                        _procedures[index],
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.remove_red_eye,
-                                color: Colors.blue),
-                            onPressed: () {
-                              // View procedure details (to be implemented)
-                            },
-                            tooltip: 'View Details',
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: () => _removeProcedure(index),
-                            tooltip: 'Delete Procedure',
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
+        title: const Text('MIFtek Assist'),
+        bottom: TabBar(
+          controller: _tabController,
+          isScrollable: true,
+          tabs: [
+            ..._categories.map((category) => Tab(text: category)),
+            const Tab(text: "My Procedures") // New tab for user’s personal list
           ],
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () {
+              showSearch(
+                context: context,
+                delegate:
+                    ProcedureSearchDelegate(_procedures, _bookmarkedProcedures),
+              );
+            },
+          ),
+        ],
       ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          ..._categories.map((category) {
+            return _buildProceduresGrid(isDesktop);
+          }),
+          _buildPersonalProceduresGrid(
+              isDesktop), // "My Procedures" tab content
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          // Add new procedure action
+        },
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  Widget _buildProceduresGrid(bool isDesktop) {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: GridView.builder(
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: isDesktop ? 3 : 1,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+        ),
+        itemCount: _procedures.length,
+        itemBuilder: (context, index) {
+          return _buildProcedureCard(_procedures[index], isDesktop);
+        },
+      ),
+    );
+  }
+
+  Widget _buildPersonalProceduresGrid(bool isDesktop) {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: _bookmarkedProcedures.isNotEmpty
+          ? GridView.builder(
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: isDesktop ? 3 : 1,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+              ),
+              itemCount: _bookmarkedProcedures.length,
+              itemBuilder: (context, index) {
+                return _buildProcedureCard(
+                    _bookmarkedProcedures[index], isDesktop,
+                    isPersonal: true);
+              },
+            )
+          : Center(
+              child: Text(
+                "No bookmarked procedures yet.",
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+            ),
+    );
+  }
+
+  Widget _buildProcedureCard(String procedure, bool isDesktop,
+      {bool isPersonal = false}) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ListTile(
+            title: Text(procedure),
+            trailing: IconButton(
+              icon: Icon(isPersonal ? Icons.edit : Icons.bookmark_add,
+                  color: Colors.blue),
+              onPressed: () {
+                if (isPersonal) {
+                  // Edit personal procedure
+                } else {
+                  // Bookmark procedure
+                  setState(() {
+                    _bookmarkedProcedures.add(procedure);
+                  });
+                }
+              },
+            ),
+            onTap: () {
+              // Expand procedure details or open detailed view
+            },
+          ),
+          // Step Preview (Collapsible section)
+          const Padding(
+            padding: EdgeInsets.all(8.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Step 1: Get floor soap'),
+                Text('Step 2: Pour soap into bucket'),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Search Delegate for searching procedures
+class ProcedureSearchDelegate extends SearchDelegate<String> {
+  final List<String> procedures;
+  final List<String> personalProcedures;
+  ProcedureSearchDelegate(this.procedures, this.personalProcedures);
+
+  @override
+  List<Widget> buildActions(BuildContext context) {
+    return [
+      IconButton(
+        icon: const Icon(Icons.clear),
+        onPressed: () {
+          query = '';
+        },
+      ),
+    ];
+  }
+
+  @override
+  Widget buildLeading(BuildContext context) {
+    return IconButton(
+      icon: const Icon(Icons.arrow_back),
+      onPressed: () {
+        close(context, '');
+      },
+    );
+  }
+
+  @override
+  Widget buildResults(BuildContext context) {
+    final results = [
+      ...procedures.where(
+          (procedure) => procedure.toLowerCase().contains(query.toLowerCase())),
+      ...personalProcedures.where(
+          (procedure) => procedure.toLowerCase().contains(query.toLowerCase())),
+    ];
+    return ListView.builder(
+      itemCount: results.length,
+      itemBuilder: (context, index) {
+        return ListTile(
+          title: Text(results[index]),
+          onTap: () {
+            // Show selected procedure
+          },
+        );
+      },
+    );
+  }
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    final suggestions = [
+      ...procedures.where(
+          (procedure) => procedure.toLowerCase().contains(query.toLowerCase())),
+      ...personalProcedures.where(
+          (procedure) => procedure.toLowerCase().contains(query.toLowerCase())),
+    ];
+    return ListView.builder(
+      itemCount: suggestions.length,
+      itemBuilder: (context, index) {
+        return ListTile(
+          title: Text(suggestions[index]),
+          onTap: () {
+            query = suggestions[index];
+          },
+        );
+      },
     );
   }
 }
