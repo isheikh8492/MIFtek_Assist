@@ -98,6 +98,7 @@ class _MainPageState extends State<MainPage> {
                   tooltip: 'Add Procedure',
                   foregroundColor: Colors.white,
                   hoverColor: Colors.blue[600],
+                  splashColor: Colors.white,
                   child: const Icon(Icons.add, size: 28),
                 ),
               ],
