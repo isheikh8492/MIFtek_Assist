@@ -85,6 +85,9 @@ class _MainPageState extends State<MainPage>
               ),
             ),
             ..._categories.map((category) => Tab(text: category)),
+            const Tab(child: Text('+', 
+            style:TextStyle(fontSize: 18)),),
+
           ],
         ),
         actions: [
