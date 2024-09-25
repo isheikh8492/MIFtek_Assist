@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -17,6 +18,14 @@ class MyApp extends StatelessWidget {
         fontFamily: 'Roboto',
       ),
       home: const MainPage(),
+      scrollBehavior: const MaterialScrollBehavior().copyWith(
+        dragDevices: {
+          PointerDeviceKind.mouse,
+          PointerDeviceKind.touch,
+          PointerDeviceKind.stylus,
+          PointerDeviceKind.unknown
+        },
+      ),
     );
   }
 }
@@ -97,6 +106,7 @@ class _MainPageState extends State<MainPage> {
             // List of Procedures
             Expanded(
               child: ListView.builder(
+                physics: const AlwaysScrollableScrollPhysics(),
                 itemCount: _procedures.length,
                 itemBuilder: (context, index) {
                   return Card(
