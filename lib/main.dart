@@ -68,10 +68,24 @@ class _MainPageState extends State<MainPage>
           controller: _tabController,
           isScrollable: true,
           tabs: [
-            const Tab(text: "My Procedures"), // New tab for user’s personal list
+            Tab(
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.deepPurple[400], // Distinct color for "My Procedures"
+                  borderRadius: BorderRadius.circular(
+                      20), // Rounded corners for visual distinction
+                ),
+                child: const Text(
+                  "My Procedures",
+                  style:
+                      TextStyle(color: Colors.white), // White text to stand out
+                ),
+              ),
+            ),
             ..._categories.map((category) => Tab(text: category)),
           ],
-          
         ),
         actions: [
           IconButton(
