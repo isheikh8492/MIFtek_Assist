@@ -68,9 +68,10 @@ class _MainPageState extends State<MainPage>
           controller: _tabController,
           isScrollable: true,
           tabs: [
+            const Tab(text: "My Procedures"), // New tab for user’s personal list
             ..._categories.map((category) => Tab(text: category)),
-            const Tab(text: "My Procedures") // New tab for user’s personal list
           ],
+          
         ),
         actions: [
           IconButton(
@@ -88,11 +89,11 @@ class _MainPageState extends State<MainPage>
       body: TabBarView(
         controller: _tabController,
         children: [
+           _buildPersonalProceduresGrid(
+              isDesktop), // "My Procedures" tab content
           ..._categories.map((category) {
             return _buildProceduresGrid(isDesktop);
           }),
-          _buildPersonalProceduresGrid(
-              isDesktop), // "My Procedures" tab content
         ],
       ),
       floatingActionButton: FloatingActionButton(
