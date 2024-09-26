@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../models/precudure.dart';
 
 class ProcedureCard extends StatelessWidget {
@@ -31,6 +30,7 @@ class ProcedureCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Title and Edit/Bookmark Icon
             Row(
               children: [
                 Expanded(
@@ -54,24 +54,34 @@ class ProcedureCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 10),
+            // Steps with Proper Alignment
             for (int i = 0; i < procedure.steps.length; i++)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4.0),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      '${i + 1}. ',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey[700],
-                      ),
+                    // Number Column with Fixed Width for Alignment
+                    SizedBox(
+                      width: 20, // Fixed width to align numbers
+                      child: Text(
+                        '${i + 1}.',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey[700],
+                          fontSize: isDesktop ? 15 : 12
+                        ),
+                        textAlign:
+                            TextAlign.right, // Align numbers to the right
+                      ), 
                     ),
+                    const SizedBox(width: 8), // Spacing between number and text
+                    // Step Text Expanded to Fill Space
                     Expanded(
                       child: Text(
                         procedure.steps[i],
                         style: TextStyle(
-                          fontSize: isDesktop ? 16 : 14,
+                          fontSize: isDesktop ? 15 : 12,
                           color: Colors.white,
                         ),
                       ),

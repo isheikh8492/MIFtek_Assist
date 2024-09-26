@@ -276,62 +276,163 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Edit Procedure'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: _editTitleController,
-                decoration: const InputDecoration(
-                  labelText: 'Procedure Name',
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: SizedBox(
+                width: 400, // Fixed width
+                height: 500, // Fixed height
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      // Procedure Title
+                      TextField(
+                        controller: _editTitleController,
+                        decoration: const InputDecoration(
+                          labelText: 'Procedure Name',
+                          contentPadding: EdgeInsets.symmetric(
+                              vertical: 12.0, horizontal: 16.0),
+                        ),
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Scrollable Steps Section
+                      Expanded(
+                        child: _editStepControllers.isEmpty
+                            ? const Center(
+                                child: Text(
+                                  'No steps available. Add a new step.',
+                                  style: TextStyle(color: Colors.grey),
+                                ),
+                              )
+                            : SingleChildScrollView(
+                                child: Column(
+                                  children: List.generate(
+                                      _editStepControllers.length, (stepIndex) {
+                                    return Card(
+                                      elevation: 2,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      margin: const EdgeInsets.symmetric(
+                                          vertical: 8),
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 10.0, horizontal: 16.0),
+                                        child: Row(
+                                          children: [
+                                            Expanded(
+                                              child: TextField(
+                                                controller:
+                                                    _editStepControllers[
+                                                        stepIndex],
+                                                decoration: InputDecoration(
+                                                  labelText:
+                                                      'Step ${stepIndex + 1}',
+                                                  border: InputBorder.none,
+                                                ),
+                                                maxLines: null,
+                                                keyboardType:
+                                                    TextInputType.multiline,
+                                                style: const TextStyle(
+                                                    fontSize: 16),
+                                              ),
+                                            ),
+                                            IconButton(
+                                              icon: const Icon(
+                                                Icons.remove_circle,
+                                                color: Colors.red,
+                                              ),
+                                              onPressed: () {
+                                                setState(() {
+                                                  _editStepControllers
+                                                      .removeAt(stepIndex);
+                                                });
+                                              },
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  }),
+                                ),
+                              ),
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      // Add Step Button
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            _editStepControllers.add(TextEditingController());
+                          });
+                        },
+                        icon: const Icon(Icons.add),
+                        label: const Text('Add Step'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.deepPurple[400],
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 12.0, horizontal: 20.0),
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // Save and Cancel Buttons
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                            child: const Text('Cancel'),
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton(
+                            onPressed: () {
+                              // Update the procedure data and close the dialog
+                              _editProcedure(
+                                _editTitleController.text,
+                                _editStepControllers
+                                    .map((controller) => controller.text)
+                                    .toList(),
+                                index,
+                              );
+                              Navigator.of(context).pop(); // Close the dialog
+                            },
+                            child: const Text('Save'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.deepPurple[400],
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 12, horizontal: 24),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(height: 10),
-              Column(
-                children: List.generate(_editStepControllers.length, (index) {
-                  return TextField(
-                    controller: _editStepControllers[index],
-                    decoration: InputDecoration(
-                      labelText: 'Step ${index + 1}',
-                    ),
-                  );
-                }),
-              ),
-              ElevatedButton.icon(
-                onPressed: () {
-                  _editStepControllers.add(TextEditingController());
-                  setState(() {});
-                },
-                icon: const Icon(Icons.add),
-                label: const Text('Add Step'),
-              )
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                _editProcedure(
-                  _editTitleController.text,
-                  _editStepControllers
-                      .map((controller) => controller.text)
-                      .toList(),
-                  index,
-                );
-                Navigator.of(context).pop();
-              },
-              child: const Text('Save'),
-            ),
-          ],
+            );
+          },
         );
       },
     );
   }
+
 }
 
