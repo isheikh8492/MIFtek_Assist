@@ -1,0 +1,57 @@
+{
+    "categories": [
+        "Maintenance",
+        "Safety",
+        "Calibration",
+        "Diagnostics",
+        "Repair"
+    ],
+    "procedures": [
+        {
+            "title": "Basic Equipment Maintenance",
+            "steps": [
+                "Turn off the equipment and unplug it.",
+                "Remove any dust from the external surface.",
+                "Check for any visible damage to the cords.",
+                "Ensure the filters are clean.",
+                "Plug in the equipment and test for smooth operation."
+            ]
+        },
+        {
+            "title": "Safety Check for Workplace",
+            "steps": [
+                "Ensure all exits are unblocked.",
+                "Test fire alarms and sprinklers.",
+                "Check the emergency lighting systems.",
+                "Ensure first aid kits are stocked."
+            ]
+        },
+        {
+            "title": "Calibration of Scales",
+            "steps": [
+                "Turn on the scale and let it warm up.",
+                "Place a known weight on the scale.",
+                "Adjust the scale until it reads the correct weight.",
+                "Record the calibration results."
+            ]
+        },
+        {
+            "title": "Diagnostics for Electrical Systems",
+            "steps": [
+                "Turn off the main power supply.",
+                "Use a multimeter to check the voltage.",
+                "Inspect the wiring for damage or wear.",
+                "Reset the circuit breaker after the inspection."
+            ]
+        },
+        {
+            "title": "Repair of Air Conditioning Unit",
+            "steps": [
+                "Turn off the air conditioning unit from the main power supply.",
+                "Open the unit and check the filters and coils.",
+                "Replace any broken or damaged components.",
+                "Turn on the unit and check for proper operation."
+            ]
+        }
+    ]
+}

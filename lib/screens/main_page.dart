@@ -1,7 +1,11 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:flutter/services.dart' show rootBundle;
+
+import '../models/precudure.dart';
 import '../widgets/procedure_card.dart';
-import './procedure_search_delegate.dart';
+
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -12,14 +16,10 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   late TabController _tabController;
-  final List<String> _categories = ["Maintenance", "Safety", "Calibration"];
-  final List<String> _procedures = [
-    "Procedure 1",
-    "Procedure 2",
-    "Procedure 3"
-  ];
-  final List<String> _bookmarkedProcedures = [];
-  bool _isAddingCategory = false; // Flag to toggle category input field
+  List<Topic> _topics = [];
+  List<Procedure> _procedures = [];
+  final List<Procedure> _bookmarkedProcedures = [];
+  bool _isAddingCategory = false;
   final TextEditingController _categoryController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
 
@@ -27,19 +27,27 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     _initializeTabController();
+    _loadSampleData(); // Load sample data
+  }
 
-    _focusNode.addListener(() {
-      if (!_focusNode.hasFocus && _isAddingCategory) {
-        setState(() {
-          _isAddingCategory = false; // Abort adding when focus is lost
-        });
-      }
+  Future<void> _loadSampleData() async {
+    String data = await rootBundle.loadString('assets/sample_data.json');
+    final jsonData = json.decode(data);
+
+    setState(() {
+      _topics = List<String>.from(jsonData['categories'])
+          .map((category) => Topic.fromJson(category))
+          .toList();
+      _procedures = List<Map<String, dynamic>>.from(jsonData['procedures'])
+          .map((procedure) => Procedure.fromJson(procedure))
+          .toList();
+      _updateTabController();
     });
   }
 
   void _initializeTabController() {
     _tabController = TabController(
-      length: _categories.length + 1, // +1 for My Procedures
+      length: _topics.length + 1, // +1 for My Procedures
       vsync: this,
     );
   }
@@ -48,7 +56,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
     setState(() {
       _tabController.dispose();
       _tabController = TabController(
-        length: _categories.length + 1,
+        length: _topics.length + 1,
         vsync: this,
       );
     });
@@ -65,7 +73,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   void _addNewCategory(String newCategory) {
     if (newCategory.isNotEmpty) {
       setState(() {
-        _categories.add(newCategory);
+        _topics.add(Topic(title: newCategory));
         _isAddingCategory = false;
         _categoryController.clear();
         _updateTabController();
@@ -73,49 +81,12 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
     }
   }
 
-  void _editProcedure(String newProcedure, int index) {
+  void _editProcedure(String newTitle, List<String> newSteps, int index) {
     setState(() {
-      _bookmarkedProcedures[index] = newProcedure;
+      _bookmarkedProcedures[index].title = newTitle;
+      _bookmarkedProcedures[index].steps = newSteps;
     });
   }
-
-  void _showEditProcedureDialog(
-      BuildContext context, String procedure, int index) {
-    TextEditingController _editController =
-        TextEditingController(text: procedure);
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Edit Procedure'),
-          content: TextField(
-            controller: _editController,
-            decoration: const InputDecoration(
-              labelText: 'Procedure Name',
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                _editProcedure(_editController.text, index);
-                Navigator.of(context).pop(); // Close the dialog
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -126,7 +97,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
         title: const Text('MIFtek Assist'),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(50.0),
-          child: Container(
+          child: SizedBox(
             height: 50,
             child: Row(
               children: [
@@ -149,11 +120,11 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                           ),
                         ),
                       ),
-                      ..._categories.map((category) => Tab(text: category)),
+                      ..._topics.map((topic) => Tab(text: topic.title)),
                     ],
                   ),
                 ),
-                if (_isAddingCategory) // Show the input field when adding a category
+                if (_isAddingCategory)
                   Container(
                     width: 200,
                     margin: const EdgeInsets.only(right: 10),
@@ -177,7 +148,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                       },
                     ),
                   )
-                else // Show the plus icon when not adding a category
+                else
                   IconButton(
                     icon: const Icon(Icons.add),
                     onPressed: () {
@@ -194,11 +165,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
-              showSearch(
-                context: context,
-                delegate:
-                    ProcedureSearchDelegate(_procedures, _bookmarkedProcedures),
-              );
+              // Search logic
             },
           ),
         ],
@@ -216,7 +183,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
           dragStartBehavior: DragStartBehavior.start,
           children: [
             _buildPersonalProceduresGrid(isDesktop),
-            ..._categories.map((category) {
+            ..._topics.map((topic) {
               return _buildProceduresGrid(isDesktop);
             }),
           ],
@@ -247,19 +214,19 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
             isDesktop: isDesktop,
             onBookmark: () {
               setState(() {
-                // Add the procedure to bookmarked list if not already added
                 if (!_bookmarkedProcedures.contains(_procedures[index])) {
                   _bookmarkedProcedures.add(_procedures[index]);
                 }
               });
             },
-            onEdit: () {},
+            onEdit: () {
+              _showEditProcedureDialog(context, _procedures[index], index);
+            },
           );
         },
       ),
     );
   }
-
 
   Widget _buildPersonalProceduresGrid(bool isDesktop) {
     return Padding(
@@ -297,4 +264,74 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
     );
   }
 
+  void _showEditProcedureDialog(
+      BuildContext context, Procedure procedure, int index) {
+    TextEditingController _editTitleController =
+        TextEditingController(text: procedure.title);
+
+    List<TextEditingController> _editStepControllers = procedure.steps
+        .map((step) => TextEditingController(text: step))
+        .toList();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Edit Procedure'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _editTitleController,
+                decoration: const InputDecoration(
+                  labelText: 'Procedure Name',
+                ),
+              ),
+              const SizedBox(height: 10),
+              Column(
+                children: List.generate(_editStepControllers.length, (index) {
+                  return TextField(
+                    controller: _editStepControllers[index],
+                    decoration: InputDecoration(
+                      labelText: 'Step ${index + 1}',
+                    ),
+                  );
+                }),
+              ),
+              ElevatedButton.icon(
+                onPressed: () {
+                  _editStepControllers.add(TextEditingController());
+                  setState(() {});
+                },
+                icon: const Icon(Icons.add),
+                label: const Text('Add Step'),
+              )
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                _editProcedure(
+                  _editTitleController.text,
+                  _editStepControllers
+                      .map((controller) => controller.text)
+                      .toList(),
+                  index,
+                );
+                Navigator.of(context).pop();
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 }
+
