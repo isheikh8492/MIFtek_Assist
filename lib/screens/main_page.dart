@@ -73,6 +73,50 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
     }
   }
 
+  void _editProcedure(String newProcedure, int index) {
+    setState(() {
+      _bookmarkedProcedures[index] = newProcedure;
+    });
+  }
+
+  void _showEditProcedureDialog(
+      BuildContext context, String procedure, int index) {
+    TextEditingController _editController =
+        TextEditingController(text: procedure);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Edit Procedure'),
+          content: TextField(
+            controller: _editController,
+            decoration: const InputDecoration(
+              labelText: 'Procedure Name',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                _editProcedure(_editController.text, index);
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
+
   @override
   Widget build(BuildContext context) {
     final isDesktop = MediaQuery.of(context).size.width > 600;
@@ -209,6 +253,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                 }
               });
             },
+            onEdit: () {},
           );
         },
       ),
@@ -233,6 +278,13 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                   isDesktop: isDesktop,
                   isPersonal: true,
                   onBookmark: () {},
+                  onEdit: () {
+                    _showEditProcedureDialog(
+                      context,
+                      _bookmarkedProcedures[index],
+                      index,
+                    );
+                  },
                 );
               },
             )
@@ -244,4 +296,5 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
             ),
     );
   }
+
 }

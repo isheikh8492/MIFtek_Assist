@@ -3,4 +3,3 @@ TODO: connect with firebase db
 TODO: should be able to search a procedure via topic at the search bar.
 TODO: edit a procedure at the bookmarks
 TODO: show who created the procedure: System, or a user(shoould mention their names)
-TODO: tabController and TabBar's are being too problematic
