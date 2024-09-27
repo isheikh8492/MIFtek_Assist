@@ -351,11 +351,11 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
           onSave:
               (String newTitle, List<String> newSteps, Topic? selectedTopic) {
             setState(() {
-              _bookmarkedProcedures.add(Procedure(
-                title: newTitle,
-                steps: newSteps,
-                topicId: selectedTopic?.id,
-              ));
+              // _bookmarkedProcedures.add(Procedure(
+              //   title: newTitle,
+              //   steps: newSteps,
+              //   topicId: selectedTopic?.id,
+              // ));
 
               if (selectedTopic != null) {
                 _procedures.add(Procedure(
