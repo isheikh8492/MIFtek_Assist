@@ -24,7 +24,6 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   final TextEditingController _categoryController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   String _searchQuery = '';
-  Topic? _selectedTopic;
   int? _highlightedProcedureId;
 
 
@@ -101,14 +100,6 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
       _bookmarkedProcedures[index].steps = newSteps;
     });
   }
-
-  void _removeProcedure(int index) {
-    setState(() {
-      _bookmarkedProcedures.removeAt(index);
-    });
-    _showSnackbar('Procedure removed successfully');
-  }
-
 
   @override
   Widget build(BuildContext context) {
@@ -587,7 +578,8 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                       setState(() {
                         if (!_bookmarkedProcedures
                             .any((proc) => proc.title == procedure.title)) {
-                          _bookmarkedProcedures.add(procedure);
+                              
+                          _bookmarkedProcedures.add(procedure.deepCopy());
                         }
                       });
                     },

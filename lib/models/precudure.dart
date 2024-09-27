@@ -27,5 +27,13 @@ class Procedure {
       'topicId': topicId,
     };
   }
+
+  Procedure deepCopy() {
+    return Procedure(
+      title: title,
+      steps: List<String>.from(steps), // Create a new list for steps
+      topicId: topicId,
+    );
+  }
 }
 
