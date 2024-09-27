@@ -8,6 +8,7 @@ import '../models/precudure.dart';
 import '../models/topic.dart';
 import '../widgets/procedure_card.dart';
 import '../widgets/edit_procedure_dialog.dart';
+import '../widgets/add_precedure_dialog.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -126,6 +127,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           // Add new procedure action
+          _showAddProcedureDialog(context);
         },
         child: const Icon(Icons.add),
       ),
@@ -305,6 +307,28 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
           procedure: procedure,
           onSave: (String newTitle, List<String> newSteps) {
             _editProcedure(newTitle, newSteps, index);
+          },
+        );
+      },
+    );
+  }
+
+  void _showAddProcedureDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AddProcedureDialog(
+          availableTopics: _topics, // Pass the list of available topics
+          onSave:
+              (String newTitle, List<String> newSteps, Topic selectedTopic) {
+            // Add the new procedure to the selected topic
+            setState(() {
+              _procedures.add(Procedure(
+                title: newTitle,
+                steps: newSteps,
+                topicId: selectedTopic.id,
+              ));
+            });
           },
         );
       },
