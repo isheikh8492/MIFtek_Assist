@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import '../models/topic.dart';
 
 class AddProcedureDialog extends StatefulWidget {
-  final Function(String, List<String>, Topic?) onSave; // Topic is optional
-  final List<Topic> availableTopics; // Pass the available topics
+  final Function(String, List<String>, Topic?) onSave;
+  final List<Topic> availableTopics;
+  final Topic? selectedTopic; // New: current tab's selected topic
 
   const AddProcedureDialog({
     required this.onSave,
     required this.availableTopics,
+    this.selectedTopic, // New: pass the topic if a specific topic tab is open
     super.key,
   });
 
@@ -18,14 +20,13 @@ class AddProcedureDialog extends StatefulWidget {
 class _AddProcedureDialogState extends State<AddProcedureDialog> {
   final TextEditingController _titleController = TextEditingController();
   final List<TextEditingController> _stepControllers = [];
-  Topic?
-      _selectedTopic; // To store the selected topic, null indicates no topic selected
+  Topic? _selectedTopic;
 
   @override
   void initState() {
     super.initState();
-    // Pre-select a blank option by setting _selectedTopic to null
-    _selectedTopic = null;
+    // If the dialog was opened from a specific topic tab, use that topic
+    _selectedTopic = widget.selectedTopic;
   }
 
   @override
@@ -44,9 +45,8 @@ class _AddProcedureDialogState extends State<AddProcedureDialog> {
         borderRadius: BorderRadius.circular(16),
       ),
       child: SizedBox(
-        width: 400, // Fixed width
-        height:
-            550, // Increased height to accommodate the info icon and dropdown
+        width: 400,
+        height: 550,
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -74,13 +74,15 @@ class _AddProcedureDialogState extends State<AddProcedureDialog> {
                         contentPadding: EdgeInsets.symmetric(
                             vertical: 12.0, horizontal: 16.0),
                       ),
-                      value:
-                          _selectedTopic, // This allows null for no topic selection
-                      onChanged: (Topic? newValue) {
-                        setState(() {
-                          _selectedTopic = newValue;
-                        });
-                      },
+                      value: _selectedTopic,
+                      onChanged: (widget.selectedTopic !=
+                              null) // Disable if topic was passed
+                          ? null
+                          : (Topic? newValue) {
+                              setState(() {
+                                _selectedTopic = newValue;
+                              });
+                            },
                       items: [
                         DropdownMenuItem<Topic>(
                           value: null, // Null indicates no topic selected
@@ -97,7 +99,8 @@ class _AddProcedureDialogState extends State<AddProcedureDialog> {
                   ),
                   IconButton(
                     icon: const Icon(Icons.info_outline),
-                    tooltip: 'Selecting a topic will add the procedure to both "My Procedures" and the selected topic.\n'
+                    tooltip:
+                        'Selecting a topic will add the procedure to both "My Procedures" and the selected topic.\n'
                         'If no topic is selected, the procedure will only appear in "My Procedures".',
                     onPressed: () {
                       showDialog(
@@ -229,3 +232,4 @@ class _AddProcedureDialogState extends State<AddProcedureDialog> {
     );
   }
 }
+

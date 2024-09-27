@@ -338,6 +338,11 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   }
 
   void _showAddProcedureDialog(BuildContext context) {
+    Topic? currentTabTopic = (_tabController.index > 0)
+        ? _topics[_tabController.index -
+            1] // Because "My Procedures" is the first tab (index 0)
+        : null; // Null if "My Procedures" tab is selected
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -362,10 +367,12 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
             });
             _showSnackbar('Procedure added successfully');
           },
+          selectedTopic: currentTabTopic, // Pass the current tab's topic
         );
       },
     );
   }
+
 
   List<Procedure> _getFilteredProcedures(Topic topic) {
     // If no search query, return all procedures for the topic
