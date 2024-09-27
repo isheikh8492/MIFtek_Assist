@@ -7,6 +7,7 @@ class ProcedureCard extends StatelessWidget {
   final bool isPersonal;
   final VoidCallback onBookmark;
   final VoidCallback onEdit;
+  final Widget? titleWidget; // Make this optional
 
   const ProcedureCard({
     super.key,
@@ -15,6 +16,7 @@ class ProcedureCard extends StatelessWidget {
     this.isPersonal = false,
     required this.onBookmark,
     required this.onEdit,
+    this.titleWidget, // Initialize it in the constructor
   });
 
   @override
@@ -34,15 +36,17 @@ class ProcedureCard extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: Text(
-                    procedure.title,
-                    style: TextStyle(
-                      fontSize: isDesktop ? 18 : 15,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  // If titleWidget is provided, use it. Otherwise, use the procedure title directly.
+                  child: titleWidget ??
+                      Text(
+                        procedure.title,
+                        style: TextStyle(
+                          fontSize: isDesktop ? 18 : 15,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                 ),
                 IconButton(
                   icon: Icon(
@@ -67,13 +71,12 @@ class ProcedureCard extends StatelessWidget {
                       child: Text(
                         '${i + 1}.',
                         style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: Colors.grey[700],
-                          fontSize: isDesktop ? 15 : 12
-                        ),
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey[700],
+                            fontSize: isDesktop ? 15 : 12),
                         textAlign:
                             TextAlign.right, // Align numbers to the right
-                      ), 
+                      ),
                     ),
                     const SizedBox(width: 8), // Spacing between number and text
                     // Step Text Expanded to Fill Space
@@ -95,3 +98,4 @@ class ProcedureCard extends StatelessWidget {
     );
   }
 }
+

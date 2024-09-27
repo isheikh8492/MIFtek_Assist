@@ -1,4 +1,5 @@
-TODO: use plus sign at bottom right to create procedure and add steps: use a modal
 TODO: connect with firebase db
-TODO: should be able to search a procedure via topic at the search bar.
 TODO: show who created the procedure: System, or a user(shoould mention their names)
+TODO: add remove procedure option
+TODO: fix why topic option is being seen and not unselectable when a different category is selected
+TODO: figure out what to do with the procedure once the search is done.
