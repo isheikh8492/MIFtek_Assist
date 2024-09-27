@@ -25,6 +25,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   final FocusNode _focusNode = FocusNode();
   String _searchQuery = '';
   Topic? _selectedTopic;
+  int? _highlightedProcedureId;
 
 
   @override
@@ -113,12 +114,6 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
           Row(
             children: [
               _buildSearchField(), // Search field with a fixed width
-              IconButton(
-                icon: const Icon(Icons.search),
-                onPressed: () {
-                  // Optionally trigger search manually if needed
-                },
-              ),
             ],
           ),
         ],
@@ -258,28 +253,12 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
             _searchQuery = query.toLowerCase(); // Update query dynamically
           });
         },
+        controller:
+            TextEditingController(text: _searchQuery), // Keep the text updated
       ),
     );
   }
 
-
-
-  Widget _buildTopicDropdownTab() {
-    return DropdownButton<Topic>(
-      value: _selectedTopic,
-      onChanged: (Topic? newTopic) {
-        setState(() {
-          _selectedTopic = newTopic;
-        });
-      },
-      items: _topics.map((topic) {
-        return DropdownMenuItem<Topic>(
-          value: topic,
-          child: Text(topic.title),
-        );
-      }).toList(),
-    );
-  }
 
 
   Widget _buildHighlightedText(String text, String query) {
@@ -306,53 +285,6 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
         text: TextSpan(
             children: spans, style: const TextStyle(color: Colors.white)));
   }
-
-
-
-  Widget _buildProceduresGrid(bool isDesktop, Topic topic) {
-    final proceduresForTopic =
-        _getFilteredProcedures(topic); // Use filtered list
-
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: proceduresForTopic.isNotEmpty
-          ? GridView.builder(
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: isDesktop ? 3 : 1,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-              ),
-              itemCount: proceduresForTopic.length,
-              itemBuilder: (context, index) {
-                final procedure = proceduresForTopic[index];
-                return ProcedureCard(
-                  procedure: procedure,
-                  isDesktop: isDesktop,
-                  titleWidget: _buildHighlightedText(procedure.title,
-                      _searchQuery), // Highlight matching parts
-                  onBookmark: () {
-                    setState(() {
-                      if (!_bookmarkedProcedures
-                          .any((proc) => proc.title == procedure.title)) {
-                        _bookmarkedProcedures.add(procedure);
-                      }
-                    });
-                  },
-                  onEdit: () {
-                    _showEditProcedureDialog(context, procedure, index);
-                  },
-                );
-              },
-            )
-          : Center(
-              child: Text(
-                "No procedures available for this topic.",
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-            ),
-    );
-  }
-
 
   Widget _buildPersonalProceduresGrid(bool isDesktop) {
     return Padding(
@@ -555,6 +487,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                         ),
                         onTap: () {
                           // You can add navigation or other actions here
+                          _highlightProcedure(procedure);
                         },
                       ),
                     ),
@@ -567,5 +500,86 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
       ),
     );
   }
+
+  void _highlightProcedure(Procedure procedure) {
+    // Find the index of the corresponding topic tab
+    int topicIndex =
+        _topics.indexWhere((topic) => topic.id == procedure.topicId);
+
+    // If the topic is found, switch to that tab
+    if (topicIndex != -1) {
+      setState(() {
+        _tabController.animateTo(
+            topicIndex + 1); // +1 because My Procedures is the first tab
+        _highlightedProcedureId = procedure.id; // Highlight this procedure
+        _searchQuery = ''; // Reset the search query
+      });
+
+      // Remove the highlight after 1 second
+      Future.delayed(Duration(seconds: 1), () {
+        setState(() {
+          _highlightedProcedureId = null; // Reset highlight
+        });
+      });
+    }
+  }
+
+
+  Widget _buildProceduresGrid(bool isDesktop, Topic topic) {
+    final proceduresForTopic = _getFilteredProcedures(topic);
+
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: proceduresForTopic.isNotEmpty
+          ? GridView.builder(
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: isDesktop ? 3 : 1,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+              ),
+              itemCount: proceduresForTopic.length,
+              itemBuilder: (context, index) {
+                final procedure = proceduresForTopic[index];
+
+                // Check if this procedure is the one being highlighted
+                final isHighlighted = procedure.id == _highlightedProcedureId;
+
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 500),
+                  decoration: BoxDecoration(
+                    color: isHighlighted
+                        ? Colors.yellow.withOpacity(0.3) // Highlight color
+                        : Colors.transparent, // Normal state
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: ProcedureCard(
+                    procedure: procedure,
+                    isDesktop: isDesktop,
+                    titleWidget:
+                        _buildHighlightedText(procedure.title, _searchQuery),
+                    onBookmark: () {
+                      setState(() {
+                        if (!_bookmarkedProcedures
+                            .any((proc) => proc.title == procedure.title)) {
+                          _bookmarkedProcedures.add(procedure);
+                        }
+                      });
+                    },
+                    onEdit: () {
+                      _showEditProcedureDialog(context, procedure, index);
+                    },
+                  ),
+                );
+              },
+            )
+          : Center(
+              child: Text(
+                "No procedures available for this topic.",
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+            ),
+    );
+  }
+
 
 }
