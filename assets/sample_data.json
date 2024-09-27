@@ -1,10 +1,29 @@
 {
-    "categories": [
-        "Maintenance",
-        "Safety",
-        "Calibration",
-        "Diagnostics",
-        "Repair"
+    "topics": [
+        {
+            "id": 0,
+            "title": "Maintenance"
+        },
+        {
+            "id": 1,
+            "title": "Safety"
+        },
+        {
+            "id": 2,
+            "title": "Calibration"
+        },
+        {
+            "id": 3,
+            "title": "Troubleshooting"
+        },
+        {
+            "id": 4,
+            "title": "Installation"
+        },
+        {
+            "id": 5,
+            "title": "Software Setup"
+        }
     ],
     "procedures": [
         {
@@ -12,46 +31,183 @@
             "steps": [
                 "Turn off the equipment and unplug it.",
                 "Remove any dust from the external surface.",
-                "Check for any visible damage to the cords.",
-                "Ensure the filters are clean.",
-                "Plug in the equipment and test for smooth operation."
-            ]
+                "Check for any visible damage to the cords."
+            ],
+            "topicId": 0
         },
         {
-            "title": "Safety Check for Workplace",
+            "title": "Advanced Maintenance Procedures",
             "steps": [
-                "Ensure all exits are unblocked.",
-                "Test fire alarms and sprinklers.",
-                "Check the emergency lighting systems.",
-                "Ensure first aid kits are stocked."
-            ]
+                "Disassemble the equipment carefully.",
+                "Clean internal components with compressed air.",
+                "Replace worn-out parts if necessary.",
+                "Reassemble and test functionality."
+            ],
+            "topicId": 0
         },
         {
-            "title": "Calibration of Scales",
+            "title": "Safety Check",
             "steps": [
-                "Turn on the scale and let it warm up.",
+                "Ensure all safety equipment is in place.",
+                "Check emergency exits.",
+                "Perform a fire drill."
+            ],
+            "topicId": 1
+        },
+        {
+            "title": "Daily Safety Inspection",
+            "steps": [
+                "Inspect fire extinguishers.",
+                "Test smoke alarms and carbon monoxide detectors.",
+                "Check the condition of safety gear."
+            ],
+            "topicId": 1
+        },
+        {
+            "title": "Precision Instrument Calibration",
+            "steps": [
+                "Turn on the instrument and allow it to warm up.",
+                "Follow the manufacturer's calibration instructions.",
+                "Record the calibration results in the logbook."
+            ],
+            "topicId": 2
+        },
+        {
+            "title": "Scale Calibration",
+            "steps": [
                 "Place a known weight on the scale.",
-                "Adjust the scale until it reads the correct weight.",
-                "Record the calibration results."
-            ]
+                "Adjust the scale to match the weight.",
+                "Re-check the scale with several weights."
+            ],
+            "topicId": 2
         },
         {
-            "title": "Diagnostics for Electrical Systems",
+            "title": "Printer Troubleshooting",
             "steps": [
-                "Turn off the main power supply.",
-                "Use a multimeter to check the voltage.",
-                "Inspect the wiring for damage or wear.",
-                "Reset the circuit breaker after the inspection."
-            ]
+                "Check the printer connection to the computer.",
+                "Ensure the printer has paper and ink.",
+                "Run a test print.",
+                "Reinstall printer drivers if necessary."
+            ],
+            "topicId": 3
         },
         {
-            "title": "Repair of Air Conditioning Unit",
+            "title": "Network Troubleshooting",
             "steps": [
-                "Turn off the air conditioning unit from the main power supply.",
-                "Open the unit and check the filters and coils.",
-                "Replace any broken or damaged components.",
-                "Turn on the unit and check for proper operation."
-            ]
+                "Check the connection cables.",
+                "Restart the modem and router.",
+                "Run network diagnostics on the computer.",
+                "Check the IP configuration."
+            ],
+            "topicId": 3
+        },
+        {
+            "title": "Basic Software Installation",
+            "steps": [
+                "Download the software from the official website.",
+                "Run the installer and follow on-screen instructions.",
+                "Restart the computer after installation."
+            ],
+            "topicId": 4
+        },
+        {
+            "title": "Advanced Hardware Installation",
+            "steps": [
+                "Turn off the system and disconnect the power.",
+                "Carefully insert the hardware into the proper slot.",
+                "Reconnect all cables and power on the system.",
+                "Install necessary drivers."
+            ],
+            "topicId": 4
+        },
+        {
+            "title": "Operating System Setup",
+            "steps": [
+                "Boot the system from the installation media.",
+                "Follow the installation wizard to set up the OS.",
+                "Create a user account and set up a password.",
+                "Install system updates."
+            ],
+            "topicId": 5
+        },
+        {
+            "title": "Database Configuration",
+            "steps": [
+                "Install the database management software.",
+                "Create a new database instance.",
+                "Configure user permissions and roles.",
+                "Set up automated backups."
+            ],
+            "topicId": 5
+        },
+        {
+            "title": "Server Software Setup",
+            "steps": [
+                "Install the web server software.",
+                "Configure the firewall to allow incoming traffic.",
+                "Set up SSL certificates for security.",
+                "Deploy the application code to the server."
+            ],
+            "topicId": 5
+        },
+        {
+            "title": "Routine System Maintenance",
+            "steps": [
+                "Run disk cleanup to remove unnecessary files.",
+                "Defragment the hard drive.",
+                "Check for operating system updates.",
+                "Run antivirus scans."
+            ],
+            "topicId": 0
+        },
+        {
+            "title": "Periodic Electrical Safety Check",
+            "steps": [
+                "Inspect all electrical cords for wear.",
+                "Ensure all outlets are grounded.",
+                "Test the circuit breakers for proper operation.",
+                "Check emergency lighting systems."
+            ],
+            "topicId": 1
+        },
+        {
+            "title": "Weight Calibration",
+            "steps": [
+                "Place calibration weights on the scale.",
+                "Adjust the scale settings to match the weight readings.",
+                "Recheck the calibration with multiple weights."
+            ],
+            "topicId": 2
+        },
+        {
+            "title": "Software Crash Troubleshooting",
+            "steps": [
+                "Check for system updates.",
+                "Review system logs for error messages.",
+                "Reinstall the application.",
+                "Check for software compatibility issues."
+            ],
+            "topicId": 3
+        },
+        {
+            "title": "Router Configuration Setup",
+            "steps": [
+                "Log into the router using the default gateway address.",
+                "Set up a new SSID and password.",
+                "Enable security settings such as WPA2 encryption.",
+                "Reboot the router."
+            ],
+            "topicId": 4
+        },
+        {
+            "title": "Initial Computer Setup",
+            "steps": [
+                "Unpack the computer and connect peripherals.",
+                "Power on the system and go through the initial setup.",
+                "Install basic software such as a web browser and office suite.",
+                "Configure system security settings."
+            ],
+            "topicId": 5
         }
     ]
 }

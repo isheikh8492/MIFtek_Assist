@@ -1,11 +1,13 @@
-import 'package:flutter/gestures.dart';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
 
 import '../models/precudure.dart';
+import '../models/topic.dart';
 import '../widgets/procedure_card.dart';
-
+import '../widgets/edit_procedure_dialog.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -35,15 +37,20 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
     final jsonData = json.decode(data);
 
     setState(() {
-      _topics = List<String>.from(jsonData['categories'])
-          .map((category) => Topic.fromJson(category))
+      // Correcting how topics are deserialized
+      _topics = (jsonData['topics'] as List)
+          .map((topicJson) => Topic.fromJson(topicJson))
           .toList();
-      _procedures = List<Map<String, dynamic>>.from(jsonData['procedures'])
-          .map((procedure) => Procedure.fromJson(procedure))
+
+      // Correcting how procedures are deserialized
+      _procedures = (jsonData['procedures'] as List)
+          .map((procedureJson) => Procedure.fromJson(procedureJson))
           .toList();
+
       _updateTabController();
     });
   }
+
 
   void _initializeTabController() {
     _tabController = TabController(
@@ -95,80 +102,8 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
     return Scaffold(
       appBar: AppBar(
         title: const Text('MIFtek Assist'),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(50.0),
-          child: SizedBox(
-            height: 50,
-            child: Row(
-              children: [
-                Expanded(
-                  child: TabBar(
-                    controller: _tabController,
-                    isScrollable: true,
-                    tabs: [
-                      Tab(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: Colors.deepPurple[400],
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Text(
-                            "My Procedures",
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      ),
-                      ..._topics.map((topic) => Tab(text: topic.title)),
-                    ],
-                  ),
-                ),
-                if (_isAddingCategory)
-                  Container(
-                    width: 200,
-                    margin: const EdgeInsets.only(right: 10),
-                    child: TextField(
-                      controller: _categoryController,
-                      focusNode: _focusNode,
-                      autofocus: true,
-                      style: const TextStyle(fontSize: 16),
-                      decoration: InputDecoration(
-                        hintText: 'New Category',
-                        suffixIcon: IconButton(
-                          icon: const Icon(Icons.check),
-                          onPressed: () {
-                            _addNewCategory(_categoryController.text);
-                          },
-                        ),
-                        border: const OutlineInputBorder(),
-                      ),
-                      onSubmitted: (value) {
-                        _addNewCategory(value);
-                      },
-                    ),
-                  )
-                else
-                  IconButton(
-                    icon: const Icon(Icons.add),
-                    onPressed: () {
-                      setState(() {
-                        _isAddingCategory = true; // Start adding category
-                      });
-                    },
-                  ),
-              ],
-            ),
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              // Search logic
-            },
-          ),
-        ],
+        bottom: _buildTabBar(),
+        actions: [_buildSearchButton()],
       ),
       body: GestureDetector(
         onTap: () {
@@ -180,11 +115,10 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
         },
         child: TabBarView(
           controller: _tabController,
-          dragStartBehavior: DragStartBehavior.start,
           children: [
             _buildPersonalProceduresGrid(isDesktop),
             ..._topics.map((topic) {
-              return _buildProceduresGrid(isDesktop);
+              return _buildProceduresGrid(isDesktop, topic);
             }),
           ],
         ),
@@ -198,33 +132,131 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildProceduresGrid(bool isDesktop) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: GridView.builder(
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: isDesktop ? 3 : 1,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
+  PreferredSizeWidget _buildTabBar() {
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(50.0),
+      child: SizedBox(
+        height: 50,
+        child: Row(
+          children: [
+            Expanded(
+              child: TabBar(
+                controller: _tabController,
+                isScrollable: true,
+                tabs: [
+                  Tab(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.deepPurple[400],
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Text(
+                        "My Procedures",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                  ..._topics.map((topic) => Tab(text: topic.title)),
+                ],
+              ),
+            ),
+            if (_isAddingCategory)
+              _buildNewCategoryInput()
+            else
+              _buildAddCategoryButton(),
+          ],
         ),
-        itemCount: _procedures.length,
-        itemBuilder: (context, index) {
-          return ProcedureCard(
-            procedure: _procedures[index],
-            isDesktop: isDesktop,
-            onBookmark: () {
-              setState(() {
-                if (!_bookmarkedProcedures.contains(_procedures[index])) {
-                  _bookmarkedProcedures.add(_procedures[index]);
-                }
-              });
+      ),
+    );
+  }
+
+  Widget _buildNewCategoryInput() {
+    return Container(
+      width: 200,
+      margin: const EdgeInsets.only(right: 10),
+      child: TextField(
+        controller: _categoryController,
+        focusNode: _focusNode,
+        autofocus: true,
+        style: const TextStyle(fontSize: 16),
+        decoration: InputDecoration(
+          hintText: 'New Category',
+          suffixIcon: IconButton(
+            icon: const Icon(Icons.check),
+            onPressed: () {
+              _addNewCategory(_categoryController.text);
             },
-            onEdit: () {
-              _showEditProcedureDialog(context, _procedures[index], index);
-            },
-          );
+          ),
+          border: const OutlineInputBorder(),
+        ),
+        onSubmitted: (value) {
+          _addNewCategory(value);
         },
       ),
+    );
+  }
+
+  Widget _buildAddCategoryButton() {
+    return IconButton(
+      icon: const Icon(Icons.add),
+      onPressed: () {
+        setState(() {
+          _isAddingCategory = true; // Start adding category
+        });
+      },
+    );
+  }
+
+  Widget _buildSearchButton() {
+    return IconButton(
+      icon: const Icon(Icons.search),
+      onPressed: () {
+        // Search logic
+      },
+    );
+  }
+
+  Widget _buildProceduresGrid(bool isDesktop, Topic topic) {
+    final proceduresForTopic = _procedures.where((procedure) => procedure.topicId == topic.id)
+    .toList();
+
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: proceduresForTopic.isNotEmpty
+          ? GridView.builder(
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: isDesktop ? 3 : 1,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+              ),
+              itemCount: proceduresForTopic.length,
+              itemBuilder: (context, index) {
+                return ProcedureCard(
+                  procedure: proceduresForTopic[index],
+                  isDesktop: isDesktop,
+                  onBookmark: () {
+                    setState(() {
+                      if (!_bookmarkedProcedures.any((proc) =>
+                          proc.title == proceduresForTopic[index].title)) {
+                        _bookmarkedProcedures.add(proceduresForTopic[index]);
+                      }
+                    });
+                  },
+                  onEdit: () {
+                    _showEditProcedureDialog(
+                        context, proceduresForTopic[index], index);
+                  },
+                );
+              },
+            )
+          : Center(
+              child: Text(
+                "No procedures available for this topic.",
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+            ),
     );
   }
 
@@ -266,173 +298,16 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
 
   void _showEditProcedureDialog(
       BuildContext context, Procedure procedure, int index) {
-    TextEditingController _editTitleController =
-        TextEditingController(text: procedure.title);
-
-    List<TextEditingController> _editStepControllers = procedure.steps
-        .map((step) => TextEditingController(text: step))
-        .toList();
-
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return Dialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: SizedBox(
-                width: 400, // Fixed width
-                height: 500, // Fixed height
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      // Procedure Title
-                      TextField(
-                        controller: _editTitleController,
-                        decoration: const InputDecoration(
-                          labelText: 'Procedure Name',
-                          contentPadding: EdgeInsets.symmetric(
-                              vertical: 12.0, horizontal: 16.0),
-                        ),
-                        style: const TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Scrollable Steps Section
-                      Expanded(
-                        child: _editStepControllers.isEmpty
-                            ? const Center(
-                                child: Text(
-                                  'No steps available. Add a new step.',
-                                  style: TextStyle(color: Colors.grey),
-                                ),
-                              )
-                            : SingleChildScrollView(
-                                child: Column(
-                                  children: List.generate(
-                                      _editStepControllers.length, (stepIndex) {
-                                    return Card(
-                                      elevation: 2,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      margin: const EdgeInsets.symmetric(
-                                          vertical: 8),
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            vertical: 10.0, horizontal: 16.0),
-                                        child: Row(
-                                          children: [
-                                            Expanded(
-                                              child: TextField(
-                                                controller:
-                                                    _editStepControllers[
-                                                        stepIndex],
-                                                decoration: InputDecoration(
-                                                  labelText:
-                                                      'Step ${stepIndex + 1}',
-                                                  border: InputBorder.none,
-                                                ),
-                                                maxLines: null,
-                                                keyboardType:
-                                                    TextInputType.multiline,
-                                                style: const TextStyle(
-                                                    fontSize: 16),
-                                              ),
-                                            ),
-                                            IconButton(
-                                              icon: const Icon(
-                                                Icons.remove_circle,
-                                                color: Colors.red,
-                                              ),
-                                              onPressed: () {
-                                                setState(() {
-                                                  _editStepControllers
-                                                      .removeAt(stepIndex);
-                                                });
-                                              },
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    );
-                                  }),
-                                ),
-                              ),
-                      ),
-
-                      const SizedBox(height: 10),
-
-                      // Add Step Button
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          setState(() {
-                            _editStepControllers.add(TextEditingController());
-                          });
-                        },
-                        icon: const Icon(Icons.add),
-                        label: const Text('Add Step'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.deepPurple[400],
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 12.0, horizontal: 20.0),
-                        ),
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      // Save and Cancel Buttons
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          TextButton(
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                            },
-                            child: const Text('Cancel'),
-                          ),
-                          const SizedBox(width: 8),
-                          ElevatedButton(
-                            onPressed: () {
-                              // Update the procedure data and close the dialog
-                              _editProcedure(
-                                _editTitleController.text,
-                                _editStepControllers
-                                    .map((controller) => controller.text)
-                                    .toList(),
-                                index,
-                              );
-                              Navigator.of(context).pop(); // Close the dialog
-                            },
-                            child: const Text('Save'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.deepPurple[400],
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 12, horizontal: 24),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
+        return EditProcedureDialog(
+          procedure: procedure,
+          onSave: (String newTitle, List<String> newSteps) {
+            _editProcedure(newTitle, newSteps, index);
           },
         );
       },
     );
   }
-
 }
-

@@ -7,8 +7,11 @@ class Topic {
     required this.title,
   }) : id = _nextId++;
 
-  factory Topic.fromJson(String jsonTitle) {
-    return Topic(title: jsonTitle);
+  // Factory constructor to handle JSON deserialization
+  factory Topic.fromJson(Map<String, dynamic> json) {
+    return Topic(
+      title: json['title'],
+    );
   }
 
   Map<String, dynamic> toJson() {
