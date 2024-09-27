@@ -7,6 +7,7 @@ class ProcedureCard extends StatelessWidget {
   final bool isPersonal;
   final VoidCallback onBookmark;
   final VoidCallback onEdit;
+  final VoidCallback onRemove; // New: Callback for remove action
   final Widget? titleWidget; // Make this optional
 
   const ProcedureCard({
@@ -16,6 +17,7 @@ class ProcedureCard extends StatelessWidget {
     this.isPersonal = false,
     required this.onBookmark,
     required this.onEdit,
+    required this.onRemove, // New: Initialize in constructor
     this.titleWidget, // Initialize it in the constructor
   });
 
@@ -32,7 +34,7 @@ class ProcedureCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Title and Edit/Bookmark Icon
+            // Title and Edit/Bookmark/Remove Icons
             Row(
               children: [
                 Expanded(
@@ -48,6 +50,15 @@ class ProcedureCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                 ),
+                // Remove Icon
+                IconButton(
+                  icon: const Icon(
+                    Icons.remove_circle,
+                    color: Colors.red,
+                  ),
+                  onPressed: onRemove, // Callback for removing procedure
+                ),
+                // Bookmark or Edit Icon
                 IconButton(
                   icon: Icon(
                     isPersonal ? Icons.edit : Icons.bookmark_add,
@@ -98,4 +109,3 @@ class ProcedureCard extends StatelessWidget {
     );
   }
 }
-

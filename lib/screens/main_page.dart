@@ -102,6 +102,14 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
     });
   }
 
+  void _removeProcedure(int index) {
+    setState(() {
+      _bookmarkedProcedures.removeAt(index);
+    });
+    _showSnackbar('Procedure removed successfully');
+  }
+
+
   @override
   Widget build(BuildContext context) {
     final isDesktop = MediaQuery.of(context).size.width > 600;
@@ -310,6 +318,9 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                       index,
                     );
                   },
+                  onRemove: () {
+                    _removeBookmarkedProcedure(index);
+                  },
                 );
               },
             )
@@ -321,6 +332,14 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
             ),
     );
   }
+
+  void _removeBookmarkedProcedure(int index) {
+    setState(() {
+      _bookmarkedProcedures.removeAt(index);
+    });
+    _showSnackbar('Procedure removed from My Procedures');
+  }
+
 
   void _showEditProcedureDialog(
       BuildContext context, Procedure procedure, int index) {
@@ -575,6 +594,9 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                     onEdit: () {
                       _showEditProcedureDialog(context, procedure, index);
                     },
+                    onRemove: () {
+                      _removeProcedureFromTopic(topic, procedure);
+                    },
                   ),
                 );
               },
@@ -588,5 +610,12 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
     );
   }
 
+  void _removeProcedureFromTopic(Topic topic, Procedure procedure) {
+    setState(() {
+      _procedures
+          .removeWhere((p) => p.id == procedure.id && p.topicId == topic.id);
+    });
+    _showSnackbar('Procedure removed from ${topic.title}');
+  }
 
 }
