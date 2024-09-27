@@ -318,16 +318,25 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
       context: context,
       builder: (BuildContext context) {
         return AddProcedureDialog(
-          availableTopics: _topics, // Pass the list of available topics
+          availableTopics: _topics,
           onSave:
-              (String newTitle, List<String> newSteps, Topic selectedTopic) {
-            // Add the new procedure to the selected topic
+              (String newTitle, List<String> newSteps, Topic? selectedTopic) {
             setState(() {
-              _procedures.add(Procedure(
+              // Always add to "My Procedures"
+              _bookmarkedProcedures.add(Procedure(
                 title: newTitle,
                 steps: newSteps,
-                topicId: selectedTopic.id,
+                topicId: selectedTopic?.id, // Can be null if no topic selected
               ));
+
+              // If a topic was selected, add the procedure to that topic too
+              if (selectedTopic != null) {
+                _procedures.add(Procedure(
+                  title: newTitle,
+                  steps: newSteps,
+                  topicId: selectedTopic.id,
+                ));
+              }
             });
           },
         );

@@ -2,13 +2,12 @@ import 'package:flutter/material.dart';
 import '../models/topic.dart';
 
 class AddProcedureDialog extends StatefulWidget {
-  final Function(String, List<String>, Topic)
-      onSave; // Add Topic to onSave callback
+  final Function(String, List<String>, Topic?) onSave; // Topic is optional
   final List<Topic> availableTopics; // Pass the available topics
 
   const AddProcedureDialog({
     required this.onSave,
-    required this.availableTopics, // Include topics list
+    required this.availableTopics,
     super.key,
   });
 
@@ -19,15 +18,14 @@ class AddProcedureDialog extends StatefulWidget {
 class _AddProcedureDialogState extends State<AddProcedureDialog> {
   final TextEditingController _titleController = TextEditingController();
   final List<TextEditingController> _stepControllers = [];
-  Topic? _selectedTopic; // To store the selected topic
+  Topic?
+      _selectedTopic; // To store the selected topic, null indicates no topic selected
 
   @override
   void initState() {
     super.initState();
-    // Pre-select the first topic if any are available
-    if (widget.availableTopics.isNotEmpty) {
-      _selectedTopic = widget.availableTopics.first;
-    }
+    // Pre-select a blank option by setting _selectedTopic to null
+    _selectedTopic = null;
   }
 
   @override
@@ -47,7 +45,8 @@ class _AddProcedureDialogState extends State<AddProcedureDialog> {
       ),
       child: SizedBox(
         width: 400, // Fixed width
-        height: 500, // Fixed height
+        height:
+            550, // Increased height to accommodate the info icon and dropdown
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -65,25 +64,65 @@ class _AddProcedureDialogState extends State<AddProcedureDialog> {
               ),
               const SizedBox(height: 20),
 
-              // Topic Dropdown
-              DropdownButtonFormField<Topic>(
-                decoration: const InputDecoration(
-                  labelText: 'Select Topic',
-                  contentPadding:
-                      EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
-                ),
-                value: _selectedTopic,
-                onChanged: (Topic? newValue) {
-                  setState(() {
-                    _selectedTopic = newValue;
-                  });
-                },
-                items: widget.availableTopics.map((Topic topic) {
-                  return DropdownMenuItem<Topic>(
-                    value: topic,
-                    child: Text(topic.title),
-                  );
-                }).toList(),
+              // Topic Dropdown with Info Icon
+              Row(
+                children: [
+                  Expanded(
+                    child: DropdownButtonFormField<Topic>(
+                      decoration: const InputDecoration(
+                        labelText: 'Select Topic',
+                        contentPadding: EdgeInsets.symmetric(
+                            vertical: 12.0, horizontal: 16.0),
+                      ),
+                      value:
+                          _selectedTopic, // This allows null for no topic selection
+                      onChanged: (Topic? newValue) {
+                        setState(() {
+                          _selectedTopic = newValue;
+                        });
+                      },
+                      items: [
+                        DropdownMenuItem<Topic>(
+                          value: null, // Null indicates no topic selected
+                          child: const Text('No Topic Selected'),
+                        ),
+                        ...widget.availableTopics.map((Topic topic) {
+                          return DropdownMenuItem<Topic>(
+                            value: topic,
+                            child: Text(topic.title),
+                          );
+                        }).toList(),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.info_outline),
+                    tooltip: 'Selecting a topic will add the procedure to both "My Procedures" and the selected topic.\n'
+                        'If no topic is selected, the procedure will only appear in "My Procedures".',
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: const Text('Topic Selection Info'),
+                            content: const Text(
+                              'Selecting a topic will add the procedure to both "My Procedures" and the selected topic.\n'
+                              'If no topic is selected, the procedure will only appear in "My Procedures".',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                                child: const Text('OK'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ],
               ),
               const SizedBox(height: 20),
 
@@ -170,17 +209,14 @@ class _AddProcedureDialogState extends State<AddProcedureDialog> {
                   const SizedBox(width: 8),
                   ElevatedButton(
                     onPressed: () {
-                      // Ensure a topic is selected before saving
-                      if (_selectedTopic != null) {
-                        widget.onSave(
-                          _titleController.text,
-                          _stepControllers
-                              .map((controller) => controller.text)
-                              .toList(),
-                          _selectedTopic!, // Pass the selected topic
-                        );
-                        Navigator.of(context).pop(); // Close the dialog
-                      }
+                      widget.onSave(
+                        _titleController.text,
+                        _stepControllers
+                            .map((controller) => controller.text)
+                            .toList(),
+                        _selectedTopic, // Pass the selected topic, which can be null
+                      );
+                      Navigator.of(context).pop(); // Close the dialog
                     },
                     child: const Text('Save'),
                   ),

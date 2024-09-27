@@ -3,12 +3,12 @@ class Procedure {
   int id;
   String title;
   List<String> steps;
-  int topicId; // Add the Topic reference
+  int? topicId; // Add the Topic reference
 
   Procedure({
     required this.title,
     required this.steps,
-    required this.topicId, // Require the topic when initializing
+    this.topicId, // Require the topic when initializing
   }) : id = _nextId++;
 
   factory Procedure.fromJson(Map<String, dynamic> json) {
