@@ -26,12 +26,36 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   String _searchQuery = '';
   int? _highlightedProcedureId;
 
+  late ScrollController _tabScrollController;
+
+  bool _showScrollButtons = false;
 
   @override
   void initState() {
     super.initState();
     _initializeTabController();
     _loadSampleData(); // Load sample data
+    _tabScrollController = ScrollController()
+      ..addListener(() {
+        _checkIfScrollable();
+      });
+  }
+
+  void _checkIfScrollable() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_tabScrollController.hasClients &&
+          _tabScrollController.position.maxScrollExtent > 0) {
+        if (!_showScrollButtons) {
+          setState(() {
+            _showScrollButtons = true;
+          });
+        }
+      } else if (_showScrollButtons) {
+        setState(() {
+          _showScrollButtons = false;
+        });
+      }
+    });
   }
 
   Future<void> _loadSampleData() async {
@@ -56,8 +80,6 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
     }
   }
 
-
-
   void _initializeTabController() {
     _tabController = TabController(
       length: _topics.length + 1, // +1 for My Procedures
@@ -73,14 +95,37 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
         vsync: this,
       );
     });
+    _checkIfScrollable();
   }
+
 
   @override
   void dispose() {
     _tabController.dispose();
     _categoryController.dispose();
     _focusNode.dispose();
+    _tabScrollController.dispose();
     super.dispose();
+  }
+
+  void _scrollTabBar(double offset) {
+    double newOffset = _tabScrollController.offset + offset;
+
+    // Prevent over-scrolling to the left
+    if (newOffset < 0) {
+      newOffset = 0;
+    }
+
+    // Prevent over-scrolling to the right
+    if (newOffset > _tabScrollController.position.maxScrollExtent) {
+      newOffset = _tabScrollController.position.maxScrollExtent;
+    }
+
+    _tabScrollController.animateTo(
+      newOffset,
+      duration: Duration(milliseconds: 300),
+      curve: Curves.ease,
+    );
   }
 
   void _addNewCategory(String newCategory) {
@@ -146,43 +191,105 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
     );
   }
 
-
-
   PreferredSizeWidget _buildTabBar() {
     return PreferredSize(
       preferredSize: const Size.fromHeight(50.0),
       child: SizedBox(
         height: 50,
-        child: Row(
-          children: [
-            Expanded(
-              child: TabBar(
-                controller: _tabController,
-                isScrollable: true,
-                tabs: [
-                  Tab(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.deepPurple[400],
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: const Text(
-                        "My Procedures",
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  ),
-                  ..._topics.map((topic) => Tab(text: topic.title)),
-                ],
+        child: GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTap: () {
+            if (_isAddingCategory) {
+              setState(() {
+                _isAddingCategory = false;
+              });
+            }
+          },
+          child: Row(
+            children: [
+              if (_showScrollButtons)
+                IconButton(
+                  icon: const Icon(Icons.chevron_left),
+                  onPressed: () =>
+                      _scrollTabBar(-200), // Scroll left by 200 pixels
+                ),
+              Expanded(
+                child: GestureDetector(
+  onHorizontalDragUpdate: (details) {
+    // Calculate the new scroll offset
+    double newOffset = _tabScrollController.offset - details.delta.dx;
+
+    // Prevent over-scrolling to the left
+    if (newOffset < 0) {
+      newOffset = 0;
+    }
+
+    // Prevent over-scrolling to the right
+    if (newOffset > _tabScrollController.position.maxScrollExtent) {
+      newOffset = _tabScrollController.position.maxScrollExtent;
+    }
+
+    _tabScrollController.jumpTo(newOffset);
+  },
+  child: SingleChildScrollView(
+    controller: _tabScrollController,
+    scrollDirection: Axis.horizontal,
+    physics: const ClampingScrollPhysics(), // Disable visual scrollbar
+    child: Row(
+      children: [
+        TabBar(
+          controller: _tabController,
+          isScrollable: true,
+          tabs: [
+            Tab(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.deepPurple[400],
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Text(
+                  "My Procedures",
+                  style: TextStyle(color: Colors.white),
+                ),
               ),
             ),
-            if (_isAddingCategory)
-              _buildNewCategoryInput()
-            else
-              _buildAddCategoryButton(),
+            ..._topics.map((topic) => Tab(text: topic.title)),
           ],
+        ),
+      ],
+    ),
+  ),
+),
+              ),
+              if (_showScrollButtons)
+                IconButton(
+                  icon: const Icon(Icons.chevron_right),
+                  onPressed: () =>
+                      _scrollTabBar(200), // Scroll right by 200 pixels
+                ),
+              // Separator between the tab bar and the add button
+              Container(
+                width: 1, // Width of the separator
+                height: 30, // Height of the separator
+                color: Colors.white, // Color of the separator
+                margin: const EdgeInsets.symmetric(horizontal: 8),
+              ),
+              if (!_isAddingCategory) // Hide "+" button when adding a new category
+                Padding(
+                  padding: const EdgeInsets.only(right: 16),
+                  child: IconButton(
+                    icon: const Icon(Icons.add),
+                    onPressed: () {
+                      setState(() {
+                        _isAddingCategory = true;
+                      });
+                    },
+                  ),
+                ),
+              if (_isAddingCategory) _buildNewCategoryInput(),
+            ],
+          ),
         ),
       ),
     );
@@ -191,7 +298,7 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   Widget _buildNewCategoryInput() {
     return Container(
       width: 200, // Give a fixed width here to avoid unbounded issues
-      margin: const EdgeInsets.only(right: 10),
+      margin: const EdgeInsets.only(left: 10, right: 10),
       child: TextField(
         controller: _categoryController,
         focusNode: _focusNode,
@@ -211,17 +318,6 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
           _addNewCategory(value);
         },
       ),
-    );
-  }
-
-  Widget _buildAddCategoryButton() {
-    return IconButton(
-      icon: const Icon(Icons.add),
-      onPressed: () {
-        setState(() {
-          _isAddingCategory = true; // Start adding category
-        });
-      },
     );
   }
 
@@ -257,8 +353,6 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
       ),
     );
   }
-
-
 
   Widget _buildHighlightedText(String text, String query) {
     if (query.isEmpty || !text.toLowerCase().contains(query.toLowerCase())) {
@@ -361,12 +455,6 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
           onSave:
               (String newTitle, List<String> newSteps, Topic? selectedTopic) {
             setState(() {
-              // _bookmarkedProcedures.add(Procedure(
-              //   title: newTitle,
-              //   steps: newSteps,
-              //   topicId: selectedTopic?.id,
-              // ));
-
               if (selectedTopic != null) {
                 _procedures.add(Procedure(
                   title: newTitle,
