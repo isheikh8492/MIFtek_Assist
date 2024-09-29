@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import './signup_screen.dart';
+import './main_page.dart';
 
 class LoginScreen extends StatelessWidget {
   final TextEditingController emailController = TextEditingController();
@@ -90,8 +92,38 @@ class LoginScreen extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
-                              onPressed: () {
-                                // Handle Login logic here
+                              onPressed: () async {
+                                try {
+                                  // Log in the user with Firebase Authentication
+                                  UserCredential userCredential =
+                                      await FirebaseAuth.instance
+                                          .signInWithEmailAndPassword(
+                                    email: emailController.text.trim(),
+                                    password: passwordController.text.trim(),
+                                  );
+
+                                  // Successful login, navigate to home or any other screen
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                          'Successfully logged in as ${userCredential.user?.email}'),
+                                    ),
+                                  );
+
+                                  // Navigate to HomeScreen (replace with your own screen)
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => MainPage()),
+                                  );
+                                } catch (e) {
+                                  // Show an error message if login fails
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                        content: Text(
+                                            'Failed to log in: ${e.toString()}')),
+                                  );
+                                }
                               },
                               child: const Text(
                                 'Login',

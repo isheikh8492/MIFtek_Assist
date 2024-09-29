@@ -1,8 +1,17 @@
 import 'package:flutter/material.dart';
 import './login_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SignUpScreen extends StatelessWidget {
-  const SignUpScreen({Key? key}) : super(key: key);
+  final TextEditingController firstNameController = TextEditingController();
+  final TextEditingController lastNameController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController confirmPasswordController =
+      TextEditingController();
+
+  SignUpScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -31,15 +40,16 @@ class SignUpScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 30),
-                    Container(
+                    SizedBox(
                       width: formWidth,
                       child: Column(
                         children: [
                           TextField(
+                            controller: firstNameController,
                             decoration: InputDecoration(
                               prefixIcon: const Icon(Icons.person,
                                   color: Colors.purple),
-                              labelText: 'Name',
+                              labelText: 'First Name',
                               filled: true,
                               fillColor: Colors.grey[800],
                               labelStyle: const TextStyle(color: Colors.white),
@@ -55,6 +65,27 @@ class SignUpScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 15),
                           TextField(
+                            controller: lastNameController,
+                            decoration: InputDecoration(
+                              prefixIcon: const Icon(Icons.person,
+                                  color: Colors.purple),
+                              labelText: 'Last Name',
+                              filled: true,
+                              fillColor: Colors.grey[800],
+                              labelStyle: const TextStyle(color: Colors.white),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: Colors.purple),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 15),
+                          TextField(
+                            controller: emailController,
                             decoration: InputDecoration(
                               prefixIcon:
                                   const Icon(Icons.email, color: Colors.purple),
@@ -74,6 +105,7 @@ class SignUpScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 15),
                           TextField(
+                            controller: passwordController,
                             obscureText: true,
                             decoration: InputDecoration(
                               prefixIcon:
@@ -94,6 +126,7 @@ class SignUpScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 15),
                           TextField(
+                            controller: confirmPasswordController,
                             obscureText: true,
                             decoration: InputDecoration(
                               prefixIcon:
@@ -124,8 +157,50 @@ class SignUpScreen extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
-                              onPressed: () {
-                                // Handle Sign Up logic here
+                              onPressed: () async {
+                                if (passwordController.text !=
+                                    confirmPasswordController.text) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content:
+                                            Text('Passwords do not match')),
+                                  );
+                                  return;
+                                }
+
+                                try {
+                                  // Create a new user with email and password
+                                  final UserCredential userCredential =
+                                      await FirebaseAuth.instance
+                                          .createUserWithEmailAndPassword(
+                                    email: emailController.text.trim(),
+                                    password: passwordController.text.trim(),
+                                  );
+
+                                  // Store user information in Firestore
+                                  await FirebaseFirestore.instance
+                                      .collection('users')
+                                      .doc(userCredential.user?.uid)
+                                      .set({
+                                    'firstName':
+                                        firstNameController.text.trim(),
+                                    'lastName': lastNameController.text.trim(),
+                                    'email': emailController.text.trim(),
+                                  });
+
+                                  // Redirect to the login screen after successful sign-up
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => LoginScreen()),
+                                  );
+                                } catch (e) {
+                                  // Show an error message if sign-up fails
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                        content: Text('Failed to sign up: ${e.toString()}')),
+                                  );
+                                }
                               },
                               child: const Text(
                                 'Sign Up',
