@@ -7,15 +7,16 @@ import '../models/topic.dart';
 import '../widgets/procedure_card.dart';
 import '../widgets/edit_procedure_dialog.dart';
 import '../widgets/add_precedure_dialog.dart';
+import '../widgets/procedure_search_delegate.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
 
   @override
-  _MainPageState createState() => _MainPageState();
+  MainPageState createState() => MainPageState();
 }
 
-class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
+class MainPageState extends State<MainPage> with TickerProviderStateMixin {
   late TabController _tabController;
   List<Topic> _topics = [];
   List<Procedure> _procedures = [];
@@ -23,12 +24,13 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
   bool _isAddingCategory = false;
   final TextEditingController _categoryController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
-  String _searchQuery = '';
   int? _highlightedProcedureId;
 
   late ScrollController _tabScrollController;
 
   bool _showScrollButtons = false;
+  
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -146,6 +148,35 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
     });
   }
 
+  void highlightProcedure(Procedure procedure) {
+    // Find the index of the corresponding topic tab
+    int topicIndex =
+        _topics.indexWhere((topic) => topic.id == procedure.topicId);
+
+    if (topicIndex != -1) {
+      // Navigate to the topic tab (+1 because "My Procedures" is the first tab)
+      _tabController.animateTo(topicIndex + 1);
+    } else {
+      // If it's a bookmarked procedure, navigate to "My Procedures"
+      _tabController.animateTo(0);
+    }
+
+    // Delay to ensure the tab navigation is complete before highlighting
+    Future.delayed(const Duration(milliseconds: 300), () {
+      setState(() {
+        // Set the highlighted procedure ID to indicate which procedure to blink
+        _highlightedProcedureId = procedure.id;
+      });
+
+      // Remove highlight after a short period to create a blink effect
+      Future.delayed(const Duration(seconds: 2), () {
+        setState(() {
+          _highlightedProcedureId = null;
+        });
+      });
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDesktop = MediaQuery.of(context).size.width > 600;
@@ -153,12 +184,20 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
     return Scaffold(
       appBar: AppBar(
         title: const Text('MIFtek Assist'),
-        bottom: _buildTabBar(), // Always show the TabBar, even during search
+        bottom: _buildTabBar(),
         actions: [
-          Row(
-            children: [
-              _buildSearchField(), // Search field with a fixed width
-            ],
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () {
+              showSearch(
+                context: context,
+                delegate: ProcedureSearchDelegate(
+                  mainPageState: this,
+                  procedures: _procedures,
+                  topics: _topics,
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -170,17 +209,15 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
             });
           }
         },
-        child: _searchQuery.isNotEmpty
-            ? _buildSearchResults() // Show search results
-            : TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildPersonalProceduresGrid(isDesktop),
-                  ..._topics.map((topic) {
-                    return _buildProceduresGrid(isDesktop, topic);
-                  }),
-                ],
-              ),
+        child: TabBarView(
+          controller: _tabController,
+          children: [
+            _buildPersonalProceduresGrid(isDesktop),
+            ..._topics.map((topic) {
+              return _buildProceduresGrid(isDesktop, topic);
+            }),
+          ],
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -215,21 +252,21 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                 ),
               Expanded(
                 child: GestureDetector(
-  onHorizontalDragUpdate: (details) {
-    // Calculate the new scroll offset
-    double newOffset = _tabScrollController.offset - details.delta.dx;
+                  onHorizontalDragUpdate: (details) {
+                    // Calculate the new scroll offset
+                    double newOffset = _tabScrollController.offset - details.delta.dx;
 
-    // Prevent over-scrolling to the left
-    if (newOffset < 0) {
-      newOffset = 0;
-    }
-
-    // Prevent over-scrolling to the right
-    if (newOffset > _tabScrollController.position.maxScrollExtent) {
-      newOffset = _tabScrollController.position.maxScrollExtent;
-    }
-
-    _tabScrollController.jumpTo(newOffset);
+                    // Prevent over-scrolling to the left
+                    if (newOffset < 0) {
+                      newOffset = 0;
+                    }
+                
+                    // Prevent over-scrolling to the right
+                    if (newOffset > _tabScrollController.position.maxScrollExtent) {
+                      newOffset = _tabScrollController.position.maxScrollExtent;
+                    }
+                
+                    _tabScrollController.jumpTo(newOffset);
   },
   child: SingleChildScrollView(
     controller: _tabScrollController,
@@ -321,63 +358,6 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildSearchField() {
-    return Container(
-      width: 250, // Set a fixed width for the search field
-      padding: const EdgeInsets.all(8.0),
-      child: TextField(
-        decoration: InputDecoration(
-          hintText: 'Search Procedures...',
-          border: const OutlineInputBorder(),
-          filled: true,
-          fillColor: Colors.white,
-          suffixIcon: _searchQuery.isNotEmpty
-              ? IconButton(
-                  icon: const Icon(Icons.clear),
-                  onPressed: () {
-                    setState(() {
-                      _searchQuery = ''; // Clear search query
-                    });
-                  },
-                )
-              : null,
-        ),
-        style: const TextStyle(color: Colors.black), // Set text color to black
-        onChanged: (query) {
-          setState(() {
-            _searchQuery = query.toLowerCase(); // Update query dynamically
-          });
-        },
-        controller:
-            TextEditingController(text: _searchQuery), // Keep the text updated
-      ),
-    );
-  }
-
-  Widget _buildHighlightedText(String text, String query) {
-    if (query.isEmpty || !text.toLowerCase().contains(query.toLowerCase())) {
-      return Text(text); // No highlight needed
-    }
-
-    final List<TextSpan> spans = [];
-    int start = 0;
-    int index = text.toLowerCase().indexOf(query.toLowerCase());
-
-    while (index != -1) {
-      spans.add(TextSpan(text: text.substring(start, index)));
-      spans.add(TextSpan(
-        text: text.substring(index, index + query.length),
-        style: const TextStyle(fontWeight: FontWeight.bold),
-      ));
-      start = index + query.length;
-      index = text.toLowerCase().indexOf(query.toLowerCase(), start);
-    }
-    spans.add(TextSpan(text: text.substring(start)));
-
-    return RichText(
-        text: TextSpan(
-            children: spans, style: const TextStyle(color: Colors.white)));
-  }
 
   Widget _buildPersonalProceduresGrid(bool isDesktop) {
     return Padding(
@@ -474,19 +454,8 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
 
   List<Procedure> _getFilteredProcedures(Topic topic) {
     // If no search query, return all procedures for the topic
-    if (_searchQuery.isEmpty) {
-      return _procedures
-          .where((procedure) => procedure.topicId == topic.id)
-          .toList();
-    }
-
-    // Only match procedures where the title contains the search query
     return _procedures
-        .where((procedure) =>
-            procedure.topicId == topic.id &&
-            procedure.title
-                .toLowerCase()
-                .contains(_searchQuery)) // Only match by title
+        .where((procedure) => procedure.topicId == topic.id)
         .toList();
   }
 
@@ -497,138 +466,6 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
       SnackBar(content: Text(message)),
     );
   }
-
-  Widget _buildSearchResults() {
-    if (_searchQuery.isEmpty) return Container();
-
-    // List of procedures to show
-    List<Procedure> matchedProcedures = [];
-
-    // First, find topics where the topic title matches the search query
-    List<Topic> matchingTopics = _topics.where((topic) {
-      return topic.title.toLowerCase().contains(_searchQuery);
-    }).toList();
-
-    // Add all procedures under those matching topics
-    for (var topic in matchingTopics) {
-      matchedProcedures.addAll(
-        _procedures
-            .where((procedure) => procedure.topicId == topic.id)
-            .toList(),
-      );
-    }
-
-    // Now, find procedures where the title matches the search query, regardless of topic
-    List<Procedure> matchingProcedures = _procedures.where((procedure) {
-      return procedure.title.toLowerCase().contains(_searchQuery);
-    }).toList();
-
-    // Merge both results, ensuring no duplicates (use a Set to handle uniqueness)
-    Set<Procedure> finalResults = {...matchedProcedures, ...matchingProcedures};
-
-    if (finalResults.isEmpty) {
-      return Center(
-        child: Text("No results found for '$_searchQuery'"),
-      );
-    }
-
-    // Group results by topic for better display
-    Map<Topic, List<Procedure>> groupedResults = {};
-
-    for (var procedure in finalResults) {
-      Topic topic =
-          _topics.firstWhere((topic) => topic.id == procedure.topicId);
-      if (!groupedResults.containsKey(topic)) {
-        groupedResults[topic] = [];
-      }
-      groupedResults[topic]!.add(procedure);
-    }
-
-    // Render results grouped by topic in a lightweight, clean design
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-      child: ListView.builder(
-        itemCount: groupedResults.length,
-        itemBuilder: (context, index) {
-          Topic topic = groupedResults.keys.elementAt(index);
-          List<Procedure> procedures = groupedResults[topic]!;
-
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Topic Title with minimal styling
-                Text(
-                  topic.title,
-                  style: Theme.of(context).textTheme.headlineMedium!.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color:
-                            Colors.blueAccent, // Subtle color for topic header
-                      ),
-                ),
-                const SizedBox(
-                    height: 8.0), // Space between title and procedures
-
-                // Procedures for the topic
-                ...procedures.map((procedure) {
-                  return Padding(
-                    padding: const EdgeInsets.only(
-                        top: 8.0), // Space between procedures
-                    child: Container(
-                      decoration: BoxDecoration(
-                        border: Border(
-                          bottom:
-                              BorderSide(color: Colors.grey.shade300, width: 1),
-                        ),
-                      ),
-                      child: ListTile(
-                        title: _buildHighlightedText(
-                            procedure.title, _searchQuery),
-                        subtitle: Text(
-                          topic
-                              .title, // Show topic title as a subtitle to reinforce grouping
-                          style: TextStyle(color: Colors.grey.shade600),
-                        ),
-                        onTap: () {
-                          // You can add navigation or other actions here
-                          _highlightProcedure(procedure);
-                        },
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  void _highlightProcedure(Procedure procedure) {
-    // Find the index of the corresponding topic tab
-    int topicIndex =
-        _topics.indexWhere((topic) => topic.id == procedure.topicId);
-
-    // If the topic is found, switch to that tab
-    if (topicIndex != -1) {
-      setState(() {
-        _tabController.animateTo(
-            topicIndex + 1); // +1 because My Procedures is the first tab
-        _highlightedProcedureId = procedure.id; // Highlight this procedure
-        _searchQuery = ''; // Reset the search query
-      });
-
-      // Remove the highlight after 1 second
-      Future.delayed(Duration(seconds: 1), () {
-        setState(() {
-          _highlightedProcedureId = null; // Reset highlight
-        });
-      });
-    }
-  }
-
 
   Widget _buildProceduresGrid(bool isDesktop, Topic topic) {
     final proceduresForTopic = _getFilteredProcedures(topic);
@@ -660,13 +497,10 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
                   child: ProcedureCard(
                     procedure: procedure,
                     isDesktop: isDesktop,
-                    titleWidget:
-                        _buildHighlightedText(procedure.title, _searchQuery),
                     onBookmark: () {
                       setState(() {
                         if (!_bookmarkedProcedures
                             .any((proc) => proc.title == procedure.title)) {
-                              
                           _bookmarkedProcedures.add(procedure.deepCopy());
                         }
                       });
@@ -689,6 +523,9 @@ class _MainPageState extends State<MainPage> with TickerProviderStateMixin {
             ),
     );
   }
+
+
+
 
   void _removeProcedureFromTopic(Topic topic, Procedure procedure) {
     setState(() {
