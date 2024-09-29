@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import './screens/main_page.dart';
+import './screens/login_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -20,7 +21,7 @@ class MyApp extends StatelessWidget {
         brightness: Brightness.dark,
       ),
       themeMode: ThemeMode.system,
-      home: const MainPage(),
+      home: LoginScreen(),
     );
   }
 }

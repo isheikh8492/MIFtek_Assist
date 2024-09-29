@@ -1,94 +1,165 @@
 import 'package:flutter/material.dart';
+import './login_screen.dart';
 
 class SignUpScreen extends StatelessWidget {
-  final TextEditingController nameController = TextEditingController();
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController =
-      TextEditingController();
-
-  SignUpScreen({super.key});
+  const SignUpScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black, // Using the dark theme as before
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Center(
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Sign Up',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        color: Colors.deepPurple[400],
+      backgroundColor: Colors.black,
+      body: Center(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                double formWidth = constraints.maxWidth > 600
+                    ? 400 // Fixed width for larger screens
+                    : double.infinity; // Full width for smaller screens
+
+                return Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'Sign Up',
+                      style: TextStyle(
+                        color: Colors.purple,
+                        fontSize: 32,
                         fontWeight: FontWeight.bold,
                       ),
-                ),
-                const SizedBox(height: 20),
-                _buildTextField(nameController, 'Name', Icons.person),
-                const SizedBox(height: 16),
-                _buildTextField(emailController, 'Email', Icons.email),
-                const SizedBox(height: 16),
-                _buildTextField(passwordController, 'Password', Icons.lock,
-                    obscureText: true),
-                const SizedBox(height: 16),
-                _buildTextField(
-                    confirmPasswordController, 'Confirm Password', Icons.lock,
-                    obscureText: true),
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: () {
-                    // Handle sign-up logic here
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        Colors.deepPurple[400], // Primary button color
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 16, horizontal: 90),
-                  ),
-                  child: const Text(
-                    'Sign Up',
-                    style: TextStyle(fontSize: 18, color: Colors.white),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextButton(
-                  onPressed: () {
-                    // Navigate back to the Login screen
-                    Navigator.pop(context);
-                  },
-                  child: const Text(
-                    "Already have an account? Login",
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                ),
-              ],
+                    ),
+                    const SizedBox(height: 30),
+                    Container(
+                      width: formWidth,
+                      child: Column(
+                        children: [
+                          TextField(
+                            decoration: InputDecoration(
+                              prefixIcon: const Icon(Icons.person,
+                                  color: Colors.purple),
+                              labelText: 'Name',
+                              filled: true,
+                              fillColor: Colors.grey[800],
+                              labelStyle: const TextStyle(color: Colors.white),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: Colors.purple),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 15),
+                          TextField(
+                            decoration: InputDecoration(
+                              prefixIcon:
+                                  const Icon(Icons.email, color: Colors.purple),
+                              labelText: 'Email',
+                              filled: true,
+                              fillColor: Colors.grey[800],
+                              labelStyle: const TextStyle(color: Colors.white),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: Colors.purple),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 15),
+                          TextField(
+                            obscureText: true,
+                            decoration: InputDecoration(
+                              prefixIcon:
+                                  const Icon(Icons.lock, color: Colors.purple),
+                              labelText: 'Password',
+                              filled: true,
+                              fillColor: Colors.grey[800],
+                              labelStyle: const TextStyle(color: Colors.white),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: Colors.purple),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 15),
+                          TextField(
+                            obscureText: true,
+                            decoration: InputDecoration(
+                              prefixIcon:
+                                  const Icon(Icons.lock, color: Colors.purple),
+                              labelText: 'Confirm Password',
+                              filled: true,
+                              fillColor: Colors.grey[800],
+                              labelStyle: const TextStyle(color: Colors.white),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: Colors.purple),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 30),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16.0),
+                                backgroundColor: Colors.purple,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              onPressed: () {
+                                // Handle Sign Up logic here
+                              },
+                              child: const Text(
+                                'Sign Up',
+                                style: TextStyle(
+                                    fontSize: 16, color: Colors.white),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 15),
+                          TextButton(
+                            onPressed: () {
+                              // Navigate to login screen
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => LoginScreen()),
+                              );
+                            },
+                            child: const Text(
+                              'Already have an account? Login',
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTextField(
-      TextEditingController controller, String hint, IconData icon,
-      {bool obscureText = false}) {
-    return TextField(
-      controller: controller,
-      obscureText: obscureText,
-      style: const TextStyle(color: Colors.white),
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: TextStyle(color: Colors.grey[700]),
-        prefixIcon: Icon(icon, color: Colors.deepPurple[400]),
-        filled: true,
-        fillColor: Colors.grey[900],
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide.none,
         ),
       ),
     );
