@@ -1,1 +1,33 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"miftek-assist","appId":"1:1039473596526:android:7b50be1845057d13206e7f","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"miftek-assist","configurations":{"android":"1:1039473596526:android:7b50be1845057d13206e7f","ios":"1:1039473596526:ios:de3ddd08537d9295206e7f","macos":"1:1039473596526:ios:de3ddd08537d9295206e7f","web":"1:1039473596526:web:449b0f8f60f2f356206e7f","windows":"1:1039473596526:web:e6551e1d4c5aa48a206e7f"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "miftek-assist",
+          "appId": "1:1039473596526:android:7b50be1845057d13206e7f",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "miftek-assist",
+          "configurations": {
+            "android": "1:1039473596526:android:7b50be1845057d13206e7f",
+            "ios": "1:1039473596526:ios:de3ddd08537d9295206e7f",
+            "macos": "1:1039473596526:ios:de3ddd08537d9295206e7f",
+            "web": "1:1039473596526:web:449b0f8f60f2f356206e7f",
+            "windows": "1:1039473596526:web:e6551e1d4c5aa48a206e7f"
+          }
+        }
+      }
+    }
+  },
+  "hosting": {
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ]
+  }
+}
