@@ -1,13 +1,12 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../models/precudure.dart';
 import '../models/topic.dart';
-import '../models/user.dart';
 import '../widgets/procedure_card.dart';
 import '../widgets/edit_procedure_dialog.dart';
 import '../widgets/add_precedure_dialog.dart';
 import '../widgets/procedure_search_delegate.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../services/database_service.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -20,12 +19,12 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
   late TabController _tabController;
   List<Topic> _topics = [];
   List<Procedure> _procedures = [];
-  List<Procedure> _bookmarkedProcedures = [];
   bool _isAddingCategory = false;
   final TextEditingController _categoryController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   String? _highlightedProcedureId;
   final Map<String, String> _userNames = {};
+  final FirestoreService _firestoreService = FirestoreService();
 
   String _loggedInUserId = '';
   String? _loggedInFirstName;
@@ -59,97 +58,34 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
     _loadData();
   }
 
-  Future<String> _fetchUserNameById(String userId) async {
-    FirebaseFirestore firestore = FirebaseFirestore.instance;
-
-    try {
-      // Reference the users collection and fetch the document by ID
-      DocumentSnapshot doc = await firestore.collection('users').doc(userId).get();
-
-      if (doc.exists) {
-        // If the document exists, convert it to a User object
-        var user = doc.data() as Map<String, dynamic>;
-        String firstName = user['firstName'] ?? 'Unknown';
-        String lastName = user['lastName'] ?? '';
-        return '$firstName $lastName';
-      } else {
-        // If the document doesn't exist, return 'Unknown'
-        return 'Unknown';
-      }
-    } catch (e) {
-      print('Failed to fetch user: $e');
-      return 'Unknown';
-    }
-  }
-
-  Future<void> _loadUserNames() async {
-    for (var procedure in _procedures) {
-      // If the username for the createdBy user ID hasn't been fetched yet
-      if (!_userNames.containsKey(procedure.createdBy)) {
-        try {
-          String userName = await _fetchUserNameById(procedure.createdBy);
-          setState(() {
-            _userNames[procedure.createdBy] = userName; // Add it to the map
-          });
-        } catch (e) {
-          print('Error fetching user name for ID ${procedure.createdBy}: $e');
-        }
-      }
-    }
-  }
-
-
-
   Future<void> _loadData() async {
     try {
-      // Reference to Firestore instance
-      FirebaseFirestore firestore = FirebaseFirestore.instance;
+      // Load data using FirestoreService
+      List<Topic> loadedTopics = await _firestoreService.loadTopics();
+      List<Procedure> loadedProcedures =
+          await _firestoreService.loadProcedures();
 
-      // Load topics from Firestore
-      QuerySnapshot topicSnapshot = await firestore.collection('topics').get();
-      List<Topic> loadedTopics = topicSnapshot.docs.map((doc) {
-        return Topic.fromJson(doc.data() as Map<String, dynamic>, doc.id);
-      }).toList();
-
-      // Load procedures from Firestore
-      QuerySnapshot procedureSnapshot =
-          await firestore.collection('procedures').get();
-      List<Procedure> loadedProcedures = procedureSnapshot.docs.map((doc) {
-        return Procedure.fromJson(doc.data() as Map<String, dynamic>, doc.id);
-      }).toList();
-      
-      QuerySnapshot bookmarkedProceduresSnapshot = await firestore
-          .collection('procedures')
-          .where('createdBy', isEqualTo: _loggedInUserId)
-          .where('isPersonal', isEqualTo: true)
-          .get();
-      List<Procedure> loadedBookmarkedProcedures =
-          bookmarkedProceduresSnapshot.docs.map((doc) {
-        return Procedure.fromJson(doc.data() as Map<String, dynamic>, doc.id);
-      }).toList();
-
-      // Update the state with the fetched data
       setState(() {
         _topics = loadedTopics;
         _procedures = loadedProcedures;
-        _bookmarkedProcedures = loadedBookmarkedProcedures;
       });
       _updateTabController();
-      _loadUserNames();
+
+      // Load user names for the procedures
+      _userNames.addAll(await _firestoreService.loadUserNames(_procedures));
     } catch (e) {
       print('Error loading data: $e');
-      // Optionally show an error message or handle the error accordingly
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to load data: $e')),
       );
     }
   }
 
+
+
   bool isUserAdmin() {
     return (_loggedInEmail == "admin@miftek.com" && _loggedInFirstName == "Miftek" && _loggedInLastName == "Admin");
   }
-
-  
 
   void _checkIfScrollable() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -217,22 +153,12 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
   }
 
   Future<void> _addNewTopic(String title, String userId) async {
-    FirebaseFirestore firestore = FirebaseFirestore.instance;
+    String? topicId = await _firestoreService.addNewTopic(title, userId);
 
-    try {
-      // Add topic to Firestore with an auto-generated ID
-      DocumentReference docRef = await firestore.collection('topics').add({
-        'title': title,
-        'createdBy': userId,
-      });
-
-      // Retrieve the auto-generated ID
-      String topicId = docRef.id;
-
-      // Optionally, update the state to keep track of topics locally
+    if (topicId != null) {
       setState(() {
         _topics.add(Topic(
-          id: topicId, // Use the generated ID
+          id: topicId,
           title: title,
           createdBy: userId,
         ));
@@ -240,84 +166,52 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
       _categoryController.clear();
       _isAddingCategory = false;
       _updateTabController();
-    } catch (e) {
-      print('Failed to add topic: $e');
+    } else {
+      print('Failed to add topic');
     }
   }
 
   Future<void> _addNewProcedure(
       String title, List<String> steps, Topic? topic, String userId) async {
-    FirebaseFirestore firestore = FirebaseFirestore.instance;
+    String? procedureId = await _firestoreService.addNewProcedure(
+      title,
+      steps,
+      topic?.id,
+      userId,
+      topic == null,
+    );
 
-    try {
-      // Define the procedure data to add to Firestore
-      Map<String, dynamic> procedureData = {
-        'title': title,
-        'steps': steps,
-        'createdBy': userId,
-      };
-
-      // If topicId is not null, set the topicId and mark isPersonal as false
-      if (topic != null) {
-        procedureData['topicId'] = topic.id;
-        procedureData['isPersonal'] = false;
-      } else {
-        // If topicId is null, mark the procedure as personal
-        procedureData['topicId'] = null;
-        procedureData['isPersonal'] = true;
-      }
-
-      // Add the new procedure to Firestore
-      DocumentReference docRef =
-          await firestore.collection('procedures').add(procedureData);
-
-      // Use Firestore's auto-generated ID for the Procedure model
-      String procedureId = docRef.id;
-
-      // Update local state
+    if (procedureId != null) {
       setState(() {
         _procedures.add(Procedure(
           id: procedureId,
           title: title,
           steps: steps,
-          topicId: topic?.id, // This will be null if it's a personal procedure
+          topicId: topic?.id,
           createdBy: userId,
           isPersonal: topic == null,
         ));
       });
-    } catch (e) {
-      print('Failed to add procedure: $e');
+    } else {
+      print('Failed to add procedure');
     }
   }
-
 
   void _editProcedure(String newTitle, List<String> newSteps, int index) async {
-    FirebaseFirestore firestore = FirebaseFirestore.instance;
+    Procedure procedureToEdit = _procedures[index];
+    await _firestoreService.editProcedure(
+      procedureToEdit.id,
+      newTitle,
+      newSteps,
+    );
 
-    try {
-      // Get the procedure to update
-      Procedure procedureToEdit = _bookmarkedProcedures[index];
+    setState(() {
+      procedureToEdit.title = newTitle;
+      procedureToEdit.steps = newSteps;
+    });
 
-      // Update the procedure in Firestore
-      await firestore.collection('procedures').doc(procedureToEdit.id).update({
-        'title': newTitle,
-        'steps': newSteps,
-      });
-
-      // Update the local state after a successful Firestore update
-      setState(() {
-        _bookmarkedProcedures[index].title = newTitle;
-        _bookmarkedProcedures[index].steps = newSteps;
-      });
-
-      // Provide feedback to the user
-      _showSnackbar('Procedure updated successfully');
-    } catch (e) {
-      print('Failed to edit procedure: $e');
-      _showSnackbar('Failed to update procedure: $e');
-    }
+    _showSnackbar('Procedure updated successfully');
   }
-
 
   void highlightProcedure(Procedure procedure) {
     // Find the index of the corresponding topic tab
@@ -531,31 +425,36 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
 
 
   Widget _buildPersonalProceduresGrid(bool isDesktop) {
+    final personalProcedures = _procedures
+        .where((procedure) =>
+            procedure.isPersonal && procedure.createdBy == _loggedInUserId)
+        .toList();
+
     return Padding(
       padding: const EdgeInsets.all(16.0),
-      child: _bookmarkedProcedures.isNotEmpty
+      child: personalProcedures.isNotEmpty
           ? GridView.builder(
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: isDesktop ? 3 : 1,
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
               ),
-              itemCount: _bookmarkedProcedures.length,
+              itemCount: personalProcedures.length,
               itemBuilder: (context, index) {
                 return ProcedureCard(
-                  procedure: _bookmarkedProcedures[index],
+                  procedure: personalProcedures[index],
                   isDesktop: isDesktop,
                   isPersonal: true,
                   onBookmark: () {},
                   onEdit: () {
                     _showEditProcedureDialog(
                       context,
-                      _bookmarkedProcedures[index],
+                      personalProcedures[index],
                       index,
                     );
                   },
                   onRemove: () {
-                    _removeBookmarkedProcedure(index);
+                    _removeProcedure(personalProcedures[index]);
                   },
                   createdBy: _loggedInUserId,
                 );
@@ -570,33 +469,15 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
     );
   }
 
-  void _removeBookmarkedProcedure(int index) async {
-    FirebaseFirestore firestore = FirebaseFirestore.instance;
+  void _removeProcedure(Procedure procedure) async {
+    await _firestoreService.removeProcedure(procedure.id);
 
-    try {
-      // Get the procedure that needs to be removed
-      Procedure procedureToRemove = _bookmarkedProcedures[index];
+    setState(() {
+      _procedures.removeWhere((p) => p.id == procedure.id);
+    });
 
-      // Remove the procedure from Firestore
-      await firestore
-          .collection('procedures')
-          .doc(procedureToRemove.id)
-          .delete();
-
-      // Remove the procedure from local list
-      setState(() {
-        _bookmarkedProcedures.removeAt(index);
-      });
-
-      // Show a confirmation message
-      _showSnackbar('Procedure removed from My Procedures');
-    } catch (e) {
-      print('Failed to remove bookmarked procedure: $e');
-      _showSnackbar('Failed to remove bookmarked procedure: $e');
-    }
+    _showSnackbar('Procedure removed successfully');
   }
-
-
 
   void _showEditProcedureDialog(
       BuildContext context, Procedure procedure, int index) {
@@ -686,9 +567,12 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
                     isDesktop: isDesktop,
                     onBookmark: () {
                       setState(() {
-                        if (!_bookmarkedProcedures
-                            .any((proc) => proc.title == procedure.title)) {
-                          _bookmarkedProcedures.add(procedure.deepCopy(_loggedInUserId));
+                        if (!_procedures.any((proc) =>
+                            proc.title == procedure.title &&
+                            proc.createdBy == _loggedInUserId &&
+                            proc.isPersonal)) {
+                          // Add a deep copy of the procedure to `_procedures`
+                          _procedures.add(procedure.deepCopy(_loggedInUserId));
                         }
                       });
                     },
@@ -696,7 +580,7 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
                       _showEditProcedureDialog(context, procedure, index);
                     },
                     onRemove: () {
-                      _removeProcedureFromTopic(topic, procedure);
+                      _removeProcedure(procedure);
                     },
                     createdBy: _userNames[procedure.createdBy] ?? 'Unknown',
                     isPersonal: procedure.isPersonal,
@@ -712,27 +596,4 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
             ),
     );
   }
-
-
-  void _removeProcedureFromTopic(Topic topic, Procedure procedure) async {
-    FirebaseFirestore firestore = FirebaseFirestore.instance;
-
-    try {
-      // Remove the procedure from Firestore
-      await firestore.collection('procedures').doc(procedure.id).delete();
-
-      // Update the local state to remove the procedure from the list
-      setState(() {
-        _procedures
-            .removeWhere((p) => p.id == procedure.id && p.topicId == topic.id);
-      });
-
-      // Show a confirmation message
-      _showSnackbar('Procedure removed from ${topic.title}');
-    } catch (e) {
-      print('Failed to remove procedure: $e');
-      _showSnackbar('Failed to remove procedure: $e');
-    }
-  }
-
 }
