@@ -392,72 +392,82 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
               if (_showScrollButtons)
                 IconButton(
                   icon: const Icon(Icons.chevron_left),
-                  onPressed: () =>
-                      _scrollTabBar(-200), // Scroll left by 200 pixels
+                  onPressed: () => _scrollTabBar(-200),
                 ),
               Expanded(
                 child: GestureDetector(
                   onHorizontalDragUpdate: (details) {
-                    // Calculate the new scroll offset
-                    double newOffset = _tabScrollController.offset - details.delta.dx;
-
-                    // Prevent over-scrolling to the left
-                    if (newOffset < 0) {
-                      newOffset = 0;
-                    }
-                
-                    // Prevent over-scrolling to the right
-                    if (newOffset > _tabScrollController.position.maxScrollExtent) {
-                      newOffset = _tabScrollController.position.maxScrollExtent;
-                    }
-
+                    double newOffset =
+                        _tabScrollController.offset - details.delta.dx;
+                    newOffset = newOffset.clamp(
+                        0, _tabScrollController.position.maxScrollExtent);
                     _tabScrollController.jumpTo(newOffset);
-                    },
-                    child: SingleChildScrollView(
-                      controller: _tabScrollController,
-                      scrollDirection: Axis.horizontal,
-                      physics: const ClampingScrollPhysics(), // Disable visual scrollbar
-                      child: Row(
-                        children: [
-                          TabBar(
-                            controller: _tabController,
-                            isScrollable: true,
-                            tabs: [
-                              Tab(
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                  decoration: BoxDecoration(
-                                    color: Colors.deepPurple[800],
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: const Text(
-                                    "My Procedures",
-                                    style: TextStyle(color: Colors.white),
-                                  ),
+                  },
+                  child: SingleChildScrollView(
+                    controller: _tabScrollController,
+                    scrollDirection: Axis.horizontal,
+                    physics: const ClampingScrollPhysics(),
+                    child: Row(
+                      children: [
+                        TabBar(
+                          controller: _tabController,
+                          isScrollable: true,
+                          tabs: [
+                            Tab(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: Colors.deepPurple[800],
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: const Text(
+                                  "My Procedures",
+                                  style: TextStyle(color: Colors.white),
                                 ),
                               ),
-                              ..._topics.map((topic) => Tab(text: topic.title)),
-                            ],
-                          ),
-                        ],
-                      ),
+                            ),
+                            ..._topics.map((topic) {
+                              return GestureDetector(
+                                onSecondaryTap: () {
+                                  _showDeleteTopicDialog(topic);
+                                },
+                                child: Tab(
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: Colors.deepPurple[800],
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      topic.title,
+                                      style:
+                                          const TextStyle(color: Colors.white),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
+                ),
               ),
               if (_showScrollButtons)
                 IconButton(
                   icon: const Icon(Icons.chevron_right),
-                  onPressed: () =>
-                      _scrollTabBar(200), // Scroll right by 200 pixels
+                  onPressed: () => _scrollTabBar(200),
                 ),
-              // Separator between the tab bar and the add button
               Container(
-                width: 1, // Width of the separator
-                height: 30, // Height of the separator
-                color: Colors.white, // Color of the separator
+                width: 1,
+                height: 30,
+                color: Colors.white,
                 margin: const EdgeInsets.symmetric(horizontal: 8),
               ),
-              if (!_isAddingCategory) // Hide "+" button when adding a new category
+              if (!_isAddingCategory)
                 Padding(
                   padding: const EdgeInsets.only(right: 16),
                   child: IconButton(
@@ -549,6 +559,41 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
     );
   }
 
+  void _showDeleteTopicDialog(Topic topic) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Delete Topic'),
+          content: const Text(
+            'Deleting this topic will delete all the procedures linked to it. Are you sure you want to proceed?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                if (isUserAdmin()) {
+                  _deleteTopic(topic);
+                } else {
+                  _showSnackbar('Only administrators have this option.');
+                }
+              },
+              child: const Text(
+                'Delete',
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
   void _removeProcedure(Procedure procedure) async {
     await _firestoreService.removeProcedure(procedure.id);
 
@@ -558,6 +603,33 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
 
     _showSnackbar('Procedure removed successfully');
   }
+
+  Future<void> _deleteTopic(Topic topic) async {
+    try {
+      // Delete all procedures linked to this topic
+      List<Procedure> proceduresToDelete =
+          _procedures.where((p) => p.topicId == topic.id).toList();
+      for (var procedure in proceduresToDelete) {
+        await _firestoreService.removeProcedure(procedure.id);
+      }
+
+      // Delete the topic itself
+      await _firestoreService.removeTopic(topic.id);
+
+      // Update the local state
+      setState(() {
+        _procedures.removeWhere((p) => p.topicId == topic.id);
+        _topics.removeWhere((t) => t.id == topic.id);
+        _updateTabController();
+      });
+
+      _showSnackbar('Topic and linked procedures deleted successfully.');
+    } catch (e) {
+      print('Failed to delete topic: $e');
+      _showSnackbar('Failed to delete topic: $e');
+    }
+  }
+
 
   void _showEditProcedureDialog(
       BuildContext context, Procedure procedure, int index) {

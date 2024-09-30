@@ -155,4 +155,12 @@ class FirestoreService {
       print('Failed to remove procedure: $e');
     }
   }
+
+  Future<void> removeTopic(String topicId) async {
+    try {
+      await _firestore.collection('topics').doc(topicId).delete();
+    } catch (e) {
+      throw Exception('Failed to delete topic: $e');
+    }
+  }
 }
