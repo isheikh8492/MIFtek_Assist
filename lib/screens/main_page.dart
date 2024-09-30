@@ -455,6 +455,10 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
                                 onSecondaryTap: () {
                                   _showDeleteTopicDialog(topic);
                                 },
+                                onLongPress: () {
+                                  // For mobile environments, handle long-press action here.
+                                  _showDeleteTopicDialog(topic);
+                                },
                                 child: Tab(
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(
