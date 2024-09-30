@@ -8,7 +8,7 @@
 
 - **Cross-Platform Support**: The app runs on Android, Windows, and the web.
 - **Authentication**: Uses Firebase Authentication for secure user login and registration.
-- **Admin and User Roles**: The admin account (`admin@miftek.com`) has extra privileges to manage topics and procedures. Currently, there is no functionality to add additional administrators.
+- **Admin and User Roles**: The admin account (`admin@miftek.com`) has extra privileges to manage topics and procedures. Currently, there is no functionality to add additional administrators. To remove a topic, right-click (desktop) or long-press (mobile) on the topic tab.
 - **Topics and Procedures**: Users can create, organize, and edit procedures categorized under different topics.
 - **Bookmarking**: Users can bookmark procedures for easy access.
 - **Real-Time Sync**: Firebase Firestore provides real-time data synchronization across all platforms.
@@ -26,10 +26,10 @@ The web version of the app is hosted using Firebase Hosting and can be accessed 
 
 You can test MIFtek Assist on different platforms using the provided download links:
 
-- **Android APK**: [Download APK](https://example.com/miftek_assist.apk)
+- **Android APK**: [Download APK](https://drive.google.com/file/d/1jw8gCNzQJV0mzKqs9CgftKZ2_Q3-OaNU/view?usp=sharing)
   - Install the APK by copying it to your Android device and opening it, or using `adb install app-release.apk` via command line.
   
-- **Windows Executable**: [Download Windows EXE](https://example.com/miftek_assist.exe)
+- **Windows Executable**: [Download Windows EXE](https://drive.google.com/file/d/1LJjZlcZvaO2JtkiGAhJmoqSo86Yqx5je/view?usp=sharing)
   - Simply download the `.exe` file and run it on your Windows machine.
 
 ### 2. Running the Web Version
