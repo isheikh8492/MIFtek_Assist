@@ -17,103 +17,106 @@ class SignUpScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              double formWidth = constraints.maxWidth > 600
-                  ? 400 // Fixed width for larger screens
-                  : double.infinity; // Full width for smaller screens
+    return Scaffold(
+      // Add Scaffold here to ensure the Material widget is present
+      body: Center(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                double formWidth = constraints.maxWidth > 600
+                    ? 400 // Fixed width for larger screens
+                    : double.infinity; // Full width for smaller screens
 
-              return Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const Text(
-                    'Sign Up',
-                    style: TextStyle(
-                      color: Colors.purple,
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
+                return Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'Sign Up',
+                      style: TextStyle(
+                        color: Colors.purple,
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 30),
-                  SizedBox(
-                    width: formWidth,
-                    child: Column(
-                      children: [
-                        buildTextField(
-                          controller: firstNameController,
-                          labelText: 'First Name',
-                          icon: Icons.person,
-                        ),
-                        const SizedBox(height: 15),
-                        buildTextField(
-                          controller: lastNameController,
-                          labelText: 'Last Name',
-                          icon: Icons.person,
-                        ),
-                        const SizedBox(height: 15),
-                        buildTextField(
-                          controller: emailController,
-                          labelText: 'Email',
-                          icon: Icons.email,
-                        ),
-                        const SizedBox(height: 15),
-                        buildTextField(
-                          controller: passwordController,
-                          labelText: 'Password',
-                          icon: Icons.lock,
-                          obscureText: true,
-                        ),
-                        const SizedBox(height: 15),
-                        buildTextField(
-                          controller: confirmPasswordController,
-                          labelText: 'Confirm Password',
-                          icon: Icons.lock,
-                          obscureText: true,
-                        ),
-                        const SizedBox(height: 30),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 16.0),
-                              backgroundColor: Colors.purple,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                    const SizedBox(height: 30),
+                    SizedBox(
+                      width: formWidth,
+                      child: Column(
+                        children: [
+                          buildTextField(
+                            controller: firstNameController,
+                            labelText: 'First Name',
+                            icon: Icons.person,
+                          ),
+                          const SizedBox(height: 15),
+                          buildTextField(
+                            controller: lastNameController,
+                            labelText: 'Last Name',
+                            icon: Icons.person,
+                          ),
+                          const SizedBox(height: 15),
+                          buildTextField(
+                            controller: emailController,
+                            labelText: 'Email',
+                            icon: Icons.email,
+                          ),
+                          const SizedBox(height: 15),
+                          buildTextField(
+                            controller: passwordController,
+                            labelText: 'Password',
+                            icon: Icons.lock,
+                            obscureText: true,
+                          ),
+                          const SizedBox(height: 15),
+                          buildTextField(
+                            controller: confirmPasswordController,
+                            labelText: 'Confirm Password',
+                            icon: Icons.lock,
+                            obscureText: true,
+                          ),
+                          const SizedBox(height: 30),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16.0),
+                                backgroundColor: Colors.purple,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              onPressed: () async {
+                                await handleSignUp(context);
+                              },
+                              child: const Text(
+                                'Sign Up',
+                                style: TextStyle(
+                                    fontSize: 16, color: Colors.white),
                               ),
                             ),
-                            onPressed: () async {
-                              await handleSignUp(context);
-                            },
+                          ),
+                          const SizedBox(height: 15),
+                          TextButton(
+                            onPressed: onLoginClicked,
                             child: const Text(
-                              'Sign Up',
-                              style:
-                                  TextStyle(fontSize: 16, color: Colors.white),
+                              'Already have an account? Login',
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 14,
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 15),
-                        TextButton(
-                          onPressed: onLoginClicked,
-                          child: const Text(
-                            'Already have an account? Login',
-                            style: TextStyle(
-                              color: Colors.grey,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              );
-            },
+                  ],
+                );
+              },
+            ),
           ),
         ),
       ),
@@ -183,7 +186,6 @@ class SignUpScreen extends StatelessWidget {
                   );
                 })),
       );
-
     } catch (e) {
       // Show an error message if sign-up fails
       ScaffoldMessenger.of(context).showSnackBar(

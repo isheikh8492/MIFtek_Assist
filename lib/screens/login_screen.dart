@@ -13,84 +13,86 @@ class LoginScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              double formWidth = constraints.maxWidth > 600
-                  ? 400 // Fixed width for larger screens
-                  : double.infinity; // Full width for smaller screens
+    return Scaffold(
+      body: Center(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                double formWidth = constraints.maxWidth > 600
+                    ? 400 // Fixed width for larger screens
+                    : double.infinity; // Full width for smaller screens
 
-              return Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const Text(
-                    'Login',
-                    style: TextStyle(
-                      color: Colors.purple,
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
+                return Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'Login',
+                      style: TextStyle(
+                        color: Colors.purple,
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 30),
-                  Container(
-                    width: formWidth,
-                    child: Column(
-                      children: [
-                        buildTextField(
-                          controller: emailController,
-                          labelText: 'Email',
-                          icon: Icons.email,
-                        ),
-                        const SizedBox(height: 15),
-                        buildTextField(
-                          controller: passwordController,
-                          labelText: 'Password',
-                          icon: Icons.lock,
-                          obscureText: true,
-                        ),
-                        const SizedBox(height: 30),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 16.0),
-                              backgroundColor: Colors.purple,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                    const SizedBox(height: 30),
+                    SizedBox(
+                      width: formWidth,
+                      child: Column(
+                        children: [
+                          buildTextField(
+                            controller: emailController,
+                            labelText: 'Email',
+                            icon: Icons.email,
+                          ),
+                          const SizedBox(height: 15),
+                          buildTextField(
+                            controller: passwordController,
+                            labelText: 'Password',
+                            icon: Icons.lock,
+                            obscureText: true,
+                          ),
+                          const SizedBox(height: 30),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16.0),
+                                backgroundColor: Colors.purple,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              onPressed: () async {
+                                await handleLogin(context);
+                              },
+                              child: const Text(
+                                'Login',
+                                style: TextStyle(
+                                    fontSize: 16, color: Colors.white),
                               ),
                             ),
-                            onPressed: () async {
-                              await handleLogin(context);
-                            },
+                          ),
+                          const SizedBox(height: 15),
+                          TextButton(
+                            onPressed: onSignUpClicked,
                             child: const Text(
-                              'Login',
+                              "Don't have an account? Sign up",
                               style: TextStyle(
-                                  fontSize: 16, color: Colors.white),
+                                color: Colors.grey,
+                                fontSize: 14,
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 15),
-                        TextButton(
-                          onPressed: onSignUpClicked,
-                          child: const Text(
-                            "Don't have an account? Sign up",
-                            style: TextStyle(
-                              color: Colors.grey,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              );
-            },
+                  ],
+                );
+              },
+            ),
           ),
         ),
       ),
