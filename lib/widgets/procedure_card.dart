@@ -8,7 +8,6 @@ class ProcedureCard extends StatelessWidget {
   final VoidCallback onBookmark;
   final VoidCallback onEdit;
   final VoidCallback onRemove; // New: Callback for remove action
-  final Widget? titleWidget; // Make this optional
   final String createdBy;
 
   const ProcedureCard({
@@ -19,7 +18,6 @@ class ProcedureCard extends StatelessWidget {
     required this.onBookmark,
     required this.onEdit,
     required this.onRemove, // New: Initialize in constructor
-    this.titleWidget, // Initialize it in the constructor
     required this.createdBy,
   });
 
@@ -40,17 +38,17 @@ class ProcedureCard extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  // If titleWidget is provided, use it. Otherwise, use the procedure title directly.
-                  child: titleWidget ??
-                      Text(
-                        procedure.title,
-                        style: TextStyle(
-                          fontSize: isDesktop ? 18 : 15,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                  child: Text(
+                    procedure.title,
+                    style: TextStyle(
+                      fontSize: isDesktop ? 18 : 15,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white
+                          : Colors.black,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
                 // Remove Icon
                 IconButton(
@@ -105,7 +103,10 @@ class ProcedureCard extends StatelessWidget {
                             procedure.steps[i],
                             style: TextStyle(
                               fontSize: isDesktop ? 15 : 12,
-                              color: Colors.white,
+                              color: Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? Colors.white
+                                  : Colors.black,
                             ),
                           ),
                         ),
@@ -131,7 +132,7 @@ class ProcedureCard extends StatelessWidget {
                     'Created by: $createdBy',
                     style: TextStyle(
                       fontSize: isDesktop ? 12 : 10,
-                      color: Colors.grey[400],
+                      color: Colors.grey[300],
                     ),
                   ),
                 ),

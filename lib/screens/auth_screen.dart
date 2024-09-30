@@ -20,7 +20,12 @@ class _AuthScreenState extends State<AuthScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('MIFtek Assist'),
+        title: Text(
+          'MIFtek Assist',
+          style: TextStyle(
+            color: Colors.white,
+          ),
+        ),
         backgroundColor: Colors.purple,
       ),
       backgroundColor: Colors.black,

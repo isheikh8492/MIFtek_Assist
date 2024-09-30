@@ -157,6 +157,9 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
   Future<void> _addNewTopic(String title, String userId) async {
     String? topicId = await _firestoreService.addNewTopic(title, userId);
 
+    if (title == '') {
+      return;
+    }
     if (topicId != null) {
       setState(() {
         _topics.add(Topic(
@@ -268,12 +271,18 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('MIFtek Assist'),
+        title: Text(
+          'MIFtek Assist',
+          style: TextStyle(
+            color: Colors.white,
+          ),
+        ),
         backgroundColor: Colors.purple,
         bottom: _buildTabBar(),
         actions: [
           IconButton(
             icon: const Icon(Icons.search),
+            color: Colors.white,
             onPressed: () {
               showSearch(
                 context: context,
@@ -304,7 +313,9 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
                       const SizedBox(width: 8),
                       Text(
                         '${_loggedInFirstName!} ${_loggedInLastName!}',
-                        style: const TextStyle(color: Colors.white),
+                        style: TextStyle(
+                          color: Colors.white,
+                        ),
                       ),
                     ],
                   ),
@@ -369,8 +380,15 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
         onPressed: () {
           _showAddProcedureDialog(context);
         },
-        child: const Icon(Icons.add),
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? Colors.purple
+            : Colors.deepPurple,
+        child: Icon(
+          Icons.add,
+          color: Colors.white
+        ),
       ),
+
     );
   }
 
@@ -393,6 +411,7 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
               if (_showScrollButtons)
                 IconButton(
                   icon: const Icon(Icons.chevron_left),
+                  color: Colors.white,
                   onPressed: () => _scrollTabBar(-200),
                 ),
               Expanded(
@@ -422,10 +441,13 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
                                   color: Colors.deepPurple[800],
                                   borderRadius: BorderRadius.circular(20),
                                 ),
-                                child: const Text(
+                                child: Text(
                                   "My Procedures",
-                                  style: TextStyle(color: Colors.white),
+                                  style: TextStyle(
+                                    color: Colors.white
+                                  ),
                                 ),
+
                               ),
                             ),
                             ..._topics.map((topic) {
@@ -460,6 +482,7 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
               if (_showScrollButtons)
                 IconButton(
                   icon: const Icon(Icons.chevron_right),
+                  color: Colors.white,
                   onPressed: () => _scrollTabBar(200),
                 ),
               Container(
@@ -473,6 +496,7 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
                   padding: const EdgeInsets.only(right: 16),
                   child: IconButton(
                     icon: const Icon(Icons.add),
+                    color: Colors.white,
                     onPressed: () {
                       setState(() {
                         _isAddingCategory = true;
@@ -496,20 +520,28 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
         controller: _categoryController,
         focusNode: _focusNode,
         autofocus: true,
-        style: const TextStyle(fontSize: 16),
+        style: TextStyle(
+          fontSize: 16,
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Colors.white
+              : Colors.black,
+        ),
         decoration: InputDecoration(
           hintText: 'New Category',
+          hintStyle: TextStyle(
+            color: Colors.grey[200],
+          ),
           suffixIcon: IconButton(
-            icon: const Icon(Icons.check),
+            icon: Icon(
+              Icons.check,
+              color: Colors.white,
+            ),
             onPressed: () {
               _addNewTopic(_categoryController.text, _loggedInUserId);
             },
           ),
           border: const OutlineInputBorder(),
         ),
-        onSubmitted: (value) {
-          _addNewTopic(value, _loggedInUserId);
-        },
       ),
     );
   }
@@ -683,8 +715,21 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
 
   void _showSnackbar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
+      SnackBar(
+        content: Text(
+          message,
+          style: TextStyle(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.black
+                : Colors.white,
+          ),
+        ),
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? Colors.grey[300]
+            : Colors.black,
+      ),
     );
+
   }
 
   Widget _buildProceduresGrid(bool isDesktop, Topic topic) {

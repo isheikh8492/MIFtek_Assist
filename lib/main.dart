@@ -19,11 +19,16 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'MIFtek Assist',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
         brightness: Brightness.light,
+        textTheme: TextTheme(
+          bodySmall: TextStyle(color: Colors.black),
+        ),
       ),
       darkTheme: ThemeData(
         brightness: Brightness.dark,
+        textTheme: TextTheme(
+          bodySmall: TextStyle(color: Colors.white),
+        ),
       ),
       themeMode: ThemeMode.system,
       home: AuthScreen(),
