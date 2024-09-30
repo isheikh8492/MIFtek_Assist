@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import './login_screen.dart';
+import 'auth_screen.dart';
 
 class SignUpScreen extends StatelessWidget {
   final TextEditingController firstNameController = TextEditingController();
@@ -11,8 +12,9 @@ class SignUpScreen extends StatelessWidget {
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController =
       TextEditingController();
+  final VoidCallback onLoginClicked;
 
-  SignUpScreen({super.key});
+  SignUpScreen({super.key, required this.onLoginClicked});
 
   // Key for storing the next available ID in SharedPreferences
   static const String nextIdKey = 'next_user_id';
@@ -31,113 +33,103 @@ class SignUpScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Center(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                double formWidth = constraints.maxWidth > 600
-                    ? 400 // Fixed width for larger screens
-                    : double.infinity; // Full width for smaller screens
+    return Center(
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              double formWidth = constraints.maxWidth > 600
+                  ? 400 // Fixed width for larger screens
+                  : double.infinity; // Full width for smaller screens
 
-                return Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    const Text(
-                      'Sign Up',
-                      style: TextStyle(
-                        color: Colors.purple,
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                      ),
+              return Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Text(
+                    'Sign Up',
+                    style: TextStyle(
+                      color: Colors.purple,
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
                     ),
-                    const SizedBox(height: 30),
-                    SizedBox(
-                      width: formWidth,
-                      child: Column(
-                        children: [
-                          buildTextField(
-                            controller: firstNameController,
-                            labelText: 'First Name',
-                            icon: Icons.person,
-                          ),
-                          const SizedBox(height: 15),
-                          buildTextField(
-                            controller: lastNameController,
-                            labelText: 'Last Name',
-                            icon: Icons.person,
-                          ),
-                          const SizedBox(height: 15),
-                          buildTextField(
-                            controller: emailController,
-                            labelText: 'Email',
-                            icon: Icons.email,
-                          ),
-                          const SizedBox(height: 15),
-                          buildTextField(
-                            controller: passwordController,
-                            labelText: 'Password',
-                            icon: Icons.lock,
-                            obscureText: true,
-                          ),
-                          const SizedBox(height: 15),
-                          buildTextField(
-                            controller: confirmPasswordController,
-                            labelText: 'Confirm Password',
-                            icon: Icons.lock,
-                            obscureText: true,
-                          ),
-                          const SizedBox(height: 30),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 16.0),
-                                backgroundColor: Colors.purple,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              onPressed: () async {
-                                await handleSignUp(context);
-                              },
-                              child: const Text(
-                                'Sign Up',
-                                style: TextStyle(
-                                    fontSize: 16, color: Colors.white),
+                  ),
+                  const SizedBox(height: 30),
+                  SizedBox(
+                    width: formWidth,
+                    child: Column(
+                      children: [
+                        buildTextField(
+                          controller: firstNameController,
+                          labelText: 'First Name',
+                          icon: Icons.person,
+                        ),
+                        const SizedBox(height: 15),
+                        buildTextField(
+                          controller: lastNameController,
+                          labelText: 'Last Name',
+                          icon: Icons.person,
+                        ),
+                        const SizedBox(height: 15),
+                        buildTextField(
+                          controller: emailController,
+                          labelText: 'Email',
+                          icon: Icons.email,
+                        ),
+                        const SizedBox(height: 15),
+                        buildTextField(
+                          controller: passwordController,
+                          labelText: 'Password',
+                          icon: Icons.lock,
+                          obscureText: true,
+                        ),
+                        const SizedBox(height: 15),
+                        buildTextField(
+                          controller: confirmPasswordController,
+                          labelText: 'Confirm Password',
+                          icon: Icons.lock,
+                          obscureText: true,
+                        ),
+                        const SizedBox(height: 30),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 16.0),
+                              backgroundColor: Colors.purple,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 15),
-                          TextButton(
-                            onPressed: () {
-                              // Navigate to login screen
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => LoginScreen()),
-                              );
+                            onPressed: () async {
+                              await handleSignUp(context);
                             },
                             child: const Text(
-                              'Already have an account? Login',
-                              style: TextStyle(
-                                color: Colors.grey,
-                                fontSize: 14,
-                              ),
+                              'Sign Up',
+                              style:
+                                  TextStyle(fontSize: 16, color: Colors.white),
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(height: 15),
+                        TextButton(
+                          onPressed: onLoginClicked,
+                          child: const Text(
+                            'Already have an account? Login',
+                            style: TextStyle(
+                              color: Colors.grey,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                );
-              },
-            ),
+                  ),
+                ],
+              );
+            },
           ),
         ),
       ),
@@ -203,11 +195,17 @@ class SignUpScreen extends StatelessWidget {
       // Increment the ID and update storage
       await saveNextIdToStorage(currentId + 1);
 
-      // Redirect to the login screen after successful sign-up
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => LoginScreen()),
+        MaterialPageRoute(
+            builder: (context) => LoginScreen(onSignUpClicked: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => AuthScreen()),
+                  );
+                })),
       );
+
     } catch (e) {
       // Show an error message if sign-up fails
       ScaffoldMessenger.of(context).showSnackBar(

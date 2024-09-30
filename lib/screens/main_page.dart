@@ -249,6 +249,7 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
     return Scaffold(
       appBar: AppBar(
         title: const Text('MIFtek Assist'),
+        backgroundColor: Colors.purple,
         bottom: _buildTabBar(),
         actions: [
           IconButton(
@@ -347,7 +348,7 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                   decoration: BoxDecoration(
-                                    color: Colors.deepPurple[400],
+                                    color: Colors.deepPurple[800],
                                     borderRadius: BorderRadius.circular(20),
                                   ),
                                   child: const Text(
@@ -417,7 +418,7 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
           border: const OutlineInputBorder(),
         ),
         onSubmitted: (value) {
-          _addNewTopic(value, _loggedInUserId!);
+          _addNewTopic(value, _loggedInUserId);
         },
       ),
     );
