@@ -1,4 +1,4 @@
-package com.example.miftek_assist
+package com.miftek
 
 import io.flutter.embedding.android.FlutterActivity
 

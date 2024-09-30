@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "1039473596526",
+    "firebase_url": "https://miftek-assist-default-rtdb.firebaseio.com",
+    "project_id": "miftek-assist",
+    "storage_bucket": "miftek-assist.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1039473596526:android:7b50be1845057d13206e7f",
+        "android_client_info": {
+          "package_name": "com.miftek"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCVNkCy6N-9zxV2uYmd9cgM_jjWLMr9F2s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

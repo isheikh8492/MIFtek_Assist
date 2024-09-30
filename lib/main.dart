@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
-import './screens/main_page.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import './screens/auth_screen.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+);
   runApp(const MyApp());
 }
 
@@ -13,14 +19,19 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'MIFtek Assist',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
         brightness: Brightness.light,
+        textTheme: TextTheme(
+          bodySmall: TextStyle(color: Colors.black),
+        ),
       ),
       darkTheme: ThemeData(
         brightness: Brightness.dark,
+        textTheme: TextTheme(
+          bodySmall: TextStyle(color: Colors.white),
+        ),
       ),
       themeMode: ThemeMode.system,
-      home: const MainPage(),
+      home: AuthScreen(),
     );
   }
 }
