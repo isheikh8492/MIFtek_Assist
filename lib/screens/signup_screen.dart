@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import './login_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import './login_screen.dart';
 
 class SignUpScreen extends StatelessWidget {
   final TextEditingController firstNameController = TextEditingController();
@@ -12,6 +13,21 @@ class SignUpScreen extends StatelessWidget {
       TextEditingController();
 
   SignUpScreen({super.key});
+
+  // Key for storing the next available ID in SharedPreferences
+  static const String nextIdKey = 'next_user_id';
+
+  // Function to get the next user ID from storage
+  Future<int> getNextIdFromStorage() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(nextIdKey) ?? 0;
+  }
+
+  // Function to save the next user ID to storage
+  Future<void> saveNextIdToStorage(int nextId) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(nextIdKey, nextId);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,106 +60,36 @@ class SignUpScreen extends StatelessWidget {
                       width: formWidth,
                       child: Column(
                         children: [
-                          TextField(
+                          buildTextField(
                             controller: firstNameController,
-                            decoration: InputDecoration(
-                              prefixIcon: const Icon(Icons.person,
-                                  color: Colors.purple),
-                              labelText: 'First Name',
-                              filled: true,
-                              fillColor: Colors.grey[800],
-                              labelStyle: const TextStyle(color: Colors.white),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide.none,
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: Colors.purple),
-                              ),
-                            ),
+                            labelText: 'First Name',
+                            icon: Icons.person,
                           ),
                           const SizedBox(height: 15),
-                          TextField(
+                          buildTextField(
                             controller: lastNameController,
-                            decoration: InputDecoration(
-                              prefixIcon: const Icon(Icons.person,
-                                  color: Colors.purple),
-                              labelText: 'Last Name',
-                              filled: true,
-                              fillColor: Colors.grey[800],
-                              labelStyle: const TextStyle(color: Colors.white),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide.none,
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: Colors.purple),
-                              ),
-                            ),
+                            labelText: 'Last Name',
+                            icon: Icons.person,
                           ),
                           const SizedBox(height: 15),
-                          TextField(
+                          buildTextField(
                             controller: emailController,
-                            decoration: InputDecoration(
-                              prefixIcon:
-                                  const Icon(Icons.email, color: Colors.purple),
-                              labelText: 'Email',
-                              filled: true,
-                              fillColor: Colors.grey[800],
-                              labelStyle: const TextStyle(color: Colors.white),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide.none,
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: Colors.purple),
-                              ),
-                            ),
+                            labelText: 'Email',
+                            icon: Icons.email,
                           ),
                           const SizedBox(height: 15),
-                          TextField(
+                          buildTextField(
                             controller: passwordController,
+                            labelText: 'Password',
+                            icon: Icons.lock,
                             obscureText: true,
-                            decoration: InputDecoration(
-                              prefixIcon:
-                                  const Icon(Icons.lock, color: Colors.purple),
-                              labelText: 'Password',
-                              filled: true,
-                              fillColor: Colors.grey[800],
-                              labelStyle: const TextStyle(color: Colors.white),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide.none,
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: Colors.purple),
-                              ),
-                            ),
                           ),
                           const SizedBox(height: 15),
-                          TextField(
+                          buildTextField(
                             controller: confirmPasswordController,
+                            labelText: 'Confirm Password',
+                            icon: Icons.lock,
                             obscureText: true,
-                            decoration: InputDecoration(
-                              prefixIcon:
-                                  const Icon(Icons.lock, color: Colors.purple),
-                              labelText: 'Confirm Password',
-                              filled: true,
-                              fillColor: Colors.grey[800],
-                              labelStyle: const TextStyle(color: Colors.white),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide.none,
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: Colors.purple),
-                              ),
-                            ),
                           ),
                           const SizedBox(height: 30),
                           SizedBox(
@@ -158,49 +104,7 @@ class SignUpScreen extends StatelessWidget {
                                 ),
                               ),
                               onPressed: () async {
-                                if (passwordController.text !=
-                                    confirmPasswordController.text) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                        content:
-                                            Text('Passwords do not match')),
-                                  );
-                                  return;
-                                }
-
-                                try {
-                                  // Create a new user with email and password
-                                  final UserCredential userCredential =
-                                      await FirebaseAuth.instance
-                                          .createUserWithEmailAndPassword(
-                                    email: emailController.text.trim(),
-                                    password: passwordController.text.trim(),
-                                  );
-
-                                  // Store user information in Firestore
-                                  await FirebaseFirestore.instance
-                                      .collection('users')
-                                      .doc(userCredential.user?.uid)
-                                      .set({
-                                    'firstName':
-                                        firstNameController.text.trim(),
-                                    'lastName': lastNameController.text.trim(),
-                                    'email': emailController.text.trim(),
-                                  });
-
-                                  // Redirect to the login screen after successful sign-up
-                                  Navigator.pushReplacement(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) => LoginScreen()),
-                                  );
-                                } catch (e) {
-                                  // Show an error message if sign-up fails
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                        content: Text('Failed to sign up: ${e.toString()}')),
-                                  );
-                                }
+                                await handleSignUp(context);
                               },
                               child: const Text(
                                 'Sign Up',
@@ -238,5 +142,77 @@ class SignUpScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget buildTextField({
+    required TextEditingController controller,
+    required String labelText,
+    required IconData icon,
+    bool obscureText = false,
+  }) {
+    return TextField(
+      controller: controller,
+      obscureText: obscureText,
+      decoration: InputDecoration(
+        prefixIcon: Icon(icon, color: Colors.purple),
+        labelText: labelText,
+        filled: true,
+        fillColor: Colors.grey[800],
+        labelStyle: const TextStyle(color: Colors.white),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.purple),
+        ),
+      ),
+    );
+  }
+
+  Future<void> handleSignUp(BuildContext context) async {
+    if (passwordController.text != confirmPasswordController.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Passwords do not match')),
+      );
+      return;
+    }
+
+    try {
+      // Create a new user with email and password
+      final UserCredential userCredential =
+          await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
+      );
+
+      // Fetch the latest _nextId from persistent storage
+      int currentId = await getNextIdFromStorage();
+
+      // Store user information in Firestore
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userCredential.user?.uid)
+          .set({
+        'firstName': firstNameController.text.trim(),
+        'lastName': lastNameController.text.trim(),
+        'email': emailController.text.trim(),
+      });
+
+      // Increment the ID and update storage
+      await saveNextIdToStorage(currentId + 1);
+
+      // Redirect to the login screen after successful sign-up
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => LoginScreen()),
+      );
+    } catch (e) {
+      // Show an error message if sign-up fails
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to sign up: ${e.toString()}')),
+      );
+    }
   }
 }

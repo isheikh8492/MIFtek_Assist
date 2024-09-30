@@ -43,7 +43,7 @@ class ProcedureSearchDelegate extends SearchDelegate {
         final procedure = filteredProcedures[index];
         final topic = topics.firstWhere(
           (topic) => topic.id == procedure.topicId,
-          orElse: () => Topic(title: 'Unknown'),
+          orElse: () => Topic(id: 'Unknown', title: 'Unknown', createdBy: 'Unknown'),
         );
 
         return ListTile(
@@ -72,7 +72,7 @@ class ProcedureSearchDelegate extends SearchDelegate {
         final procedure = filteredProcedures[index];
         final topic = topics.firstWhere(
           (topic) => topic.id == procedure.topicId,
-          orElse: () => Topic(title: 'Unknown'),
+          orElse: () => Topic(id: 'Unknown', title: 'Unknown', createdBy: 'Unknown'),
         );
         return ListTile(
           title: Text(procedure.title),
@@ -91,7 +91,7 @@ class ProcedureSearchDelegate extends SearchDelegate {
     return procedures.where((procedure) {
       final topic = topics.firstWhere(
         (topic) => topic.id == procedure.topicId,
-        orElse: () => Topic(title: 'Unknown'),
+        orElse: () => Topic(id: 'Unknown', title: 'Unknown', createdBy: 'Unknown'),
       );
       return procedure.title.toLowerCase().contains(query.toLowerCase()) ||
           topic.title.toLowerCase().contains(query.toLowerCase());

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import './signup_screen.dart';
 import './main_page.dart';
 
@@ -40,45 +42,17 @@ class LoginScreen extends StatelessWidget {
                       width: formWidth,
                       child: Column(
                         children: [
-                          TextField(
+                          buildTextField(
                             controller: emailController,
-                            decoration: InputDecoration(
-                              prefixIcon:
-                                  const Icon(Icons.email, color: Colors.purple),
-                              labelText: 'Email',
-                              filled: true,
-                              fillColor: Colors.grey[800],
-                              labelStyle: const TextStyle(color: Colors.white),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide.none,
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: Colors.purple),
-                              ),
-                            ),
+                            labelText: 'Email',
+                            icon: Icons.email,
                           ),
                           const SizedBox(height: 15),
-                          TextField(
+                          buildTextField(
                             controller: passwordController,
+                            labelText: 'Password',
+                            icon: Icons.lock,
                             obscureText: true,
-                            decoration: InputDecoration(
-                              prefixIcon:
-                                  const Icon(Icons.lock, color: Colors.purple),
-                              labelText: 'Password',
-                              filled: true,
-                              fillColor: Colors.grey[800],
-                              labelStyle: const TextStyle(color: Colors.white),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide.none,
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: Colors.purple),
-                              ),
-                            ),
                           ),
                           const SizedBox(height: 30),
                           SizedBox(
@@ -93,37 +67,7 @@ class LoginScreen extends StatelessWidget {
                                 ),
                               ),
                               onPressed: () async {
-                                try {
-                                  // Log in the user with Firebase Authentication
-                                  UserCredential userCredential =
-                                      await FirebaseAuth.instance
-                                          .signInWithEmailAndPassword(
-                                    email: emailController.text.trim(),
-                                    password: passwordController.text.trim(),
-                                  );
-
-                                  // Successful login, navigate to home or any other screen
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                          'Successfully logged in as ${userCredential.user?.email}'),
-                                    ),
-                                  );
-
-                                  // Navigate to HomeScreen (replace with your own screen)
-                                  Navigator.pushReplacement(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) => MainPage()),
-                                  );
-                                } catch (e) {
-                                  // Show an error message if login fails
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                        content: Text(
-                                            'Failed to log in: ${e.toString()}')),
-                                  );
-                                }
+                                await handleLogin(context);
                               },
                               child: const Text(
                                 'Login',
@@ -161,5 +105,79 @@ class LoginScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget buildTextField({
+    required TextEditingController controller,
+    required String labelText,
+    required IconData icon,
+    bool obscureText = false,
+  }) {
+    return TextField(
+      controller: controller,
+      obscureText: obscureText,
+      decoration: InputDecoration(
+        prefixIcon: Icon(icon, color: Colors.purple),
+        labelText: labelText,
+        filled: true,
+        fillColor: Colors.grey[800],
+        labelStyle: const TextStyle(color: Colors.white),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.purple),
+        ),
+      ),
+    );
+  }
+
+  Future<void> handleLogin(BuildContext context) async {
+    try {
+      // Log in the user with Firebase Authentication
+      UserCredential userCredential =
+          await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
+      );
+
+      // Fetch user data from Firestore using user ID (UID from FirebaseAuth)
+      String userId = userCredential.user?.uid ?? '';
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
+
+      if (userDoc.exists) {
+        // Extract user data and store it locally for use throughout the app
+        Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
+
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setString('userId', userDoc.id);
+        await prefs.setString('firstName', userData['firstName']);
+        await prefs.setString('lastName', userData['lastName']);
+        await prefs.setString('email', userData['email']);
+
+        // Successful login, navigate to main page or home screen
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Successfully logged in as ${userData['email']}')),
+        );
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => MainPage()),
+        );
+      } else {
+        throw Exception('User data not found');
+      }
+    } catch (e) {
+      // Show an error message if login fails
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to log in: ${e.toString()}')),
+      );
+    }
   }
 }

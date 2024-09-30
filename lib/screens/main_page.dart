@@ -1,13 +1,12 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'dart:convert';
-import 'package:flutter/services.dart' show rootBundle;
-
 import '../models/precudure.dart';
 import '../models/topic.dart';
 import '../widgets/procedure_card.dart';
 import '../widgets/edit_procedure_dialog.dart';
 import '../widgets/add_precedure_dialog.dart';
 import '../widgets/procedure_search_delegate.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -24,23 +23,75 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
   bool _isAddingCategory = false;
   final TextEditingController _categoryController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
-  int? _highlightedProcedureId;
+  String? _highlightedProcedureId;
+
+  String _loggedInUserId = '';
+  String? _loggedInFirstName;
+  String? _loggedInLastName;
+  String? _loggedInEmail;
 
   late ScrollController _tabScrollController;
 
   bool _showScrollButtons = false;
-  
-  String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
+    _loadUserInfo();
     _initializeTabController();
-    _loadSampleData(); // Load sample data
     _tabScrollController = ScrollController()
       ..addListener(() {
         _checkIfScrollable();
       });
+  }
+
+  Future<void> _loadUserInfo() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    setState(() {
+      _loggedInUserId = prefs.getString('userId')!;
+      _loggedInFirstName = prefs.getString('firstName');
+      _loggedInFirstName = prefs.getString('lastName');
+      _loggedInEmail = prefs.getString('email');
+    });
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    try {
+      // Reference to Firestore instance
+      FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+      // Load topics from Firestore
+      QuerySnapshot topicSnapshot = await firestore.collection('topics').get();
+      List<Topic> loadedTopics = topicSnapshot.docs.map((doc) {
+        return Topic.fromJson(doc.data() as Map<String, dynamic>, doc.id);
+      }).toList();
+
+      // Load procedures from Firestore
+      QuerySnapshot procedureSnapshot =
+          await firestore.collection('procedures').get();
+      List<Procedure> loadedProcedures = procedureSnapshot.docs.map((doc) {
+        return Procedure.fromJson(doc.data() as Map<String, dynamic>, doc.id);
+      }).toList();
+
+      // Update the state with the fetched data
+      setState(() {
+        _topics = loadedTopics;
+        _procedures = loadedProcedures;
+      });
+      _updateTabController();
+    } catch (e) {
+      print('Error loading data: $e');
+      // Optionally show an error message or handle the error accordingly
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load data: $e')),
+      );
+    }
+  }
+
+  bool isUserAdmin() {
+    return (_loggedInEmail == "admin@miftek.com" && _loggedInFirstName == "Miftek" && _loggedInLastName == "Admin");
   }
 
   void _checkIfScrollable() {
@@ -58,28 +109,6 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
         });
       }
     });
-  }
-
-  Future<void> _loadSampleData() async {
-    try {
-      String data = await rootBundle.loadString('assets/sample_data.json');
-      final jsonData = json.decode(data);
-
-      setState(() {
-        _topics = (jsonData['topics'] as List)
-            .map((topicJson) => Topic.fromJson(topicJson))
-            .toList();
-
-        _procedures = (jsonData['procedures'] as List)
-            .map((procedureJson) => Procedure.fromJson(procedureJson))
-            .toList();
-
-        _updateTabController();
-      });
-    } catch (e) {
-      // Handle or show error message
-      print('Error loading data: $e');
-    }
   }
 
   void _initializeTabController() {
@@ -130,16 +159,68 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
     );
   }
 
-  void _addNewCategory(String newCategory) {
-    if (newCategory.isNotEmpty) {
-      setState(() {
-        _topics.add(Topic(title: newCategory));
-        _isAddingCategory = false;
-        _categoryController.clear();
-        _updateTabController();
+  Future<void> _addNewTopic(String title, String userId) async {
+    FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+    try {
+      // Add topic to Firestore with an auto-generated ID
+      DocumentReference docRef = await firestore.collection('topics').add({
+        'title': title,
+        'createdBy': userId,
       });
+
+      // Retrieve the auto-generated ID
+      String topicId = docRef.id;
+
+      // Optionally, update the state to keep track of topics locally
+      setState(() {
+        _topics.add(Topic(
+          id: topicId, // Use the generated ID
+          title: title,
+          createdBy: userId,
+        ));
+      });
+      _categoryController.clear();
+      _isAddingCategory = false;
+      _updateTabController();
+    } catch (e) {
+      print('Failed to add topic: $e');
     }
   }
+
+  Future<void> _addNewProcedure(
+      String title, List<String> steps, String topicId, String userId) async {
+    FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+    try {
+      // Add the new procedure to Firestore and link to the topic
+      DocumentReference docRef = await firestore.collection('procedures').add({
+        'title': title,
+        'steps': steps,
+        'topicId': topicId, // Link this procedure to the topic using its ID
+        'createdBy': userId,
+        'isPersonal': false
+      });
+
+      // Use Firestore's auto-generated ID for the Procedure model
+      String procedureId = docRef.id;
+
+      setState(() {
+        _procedures.add(Procedure(
+          id: procedureId,
+          title: title,
+          steps: steps,
+          topicId: topicId,
+          createdBy: userId,
+          isPersonal: false
+        ));
+      });
+    } catch (e) {
+      print('Failed to add procedure: $e');
+    }
+  }
+
+
 
   void _editProcedure(String newTitle, List<String> newSteps, int index) {
     setState(() {
@@ -346,13 +427,13 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
           suffixIcon: IconButton(
             icon: const Icon(Icons.check),
             onPressed: () {
-              _addNewCategory(_categoryController.text);
+              _addNewTopic(_categoryController.text, _loggedInUserId);
             },
           ),
           border: const OutlineInputBorder(),
         ),
         onSubmitted: (value) {
-          _addNewCategory(value);
+          _addNewTopic(value, _loggedInUserId!);
         },
       ),
     );
@@ -436,11 +517,7 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
               (String newTitle, List<String> newSteps, Topic? selectedTopic) {
             setState(() {
               if (selectedTopic != null) {
-                _procedures.add(Procedure(
-                  title: newTitle,
-                  steps: newSteps,
-                  topicId: selectedTopic.id,
-                ));
+                _addNewProcedure(newTitle, newSteps, selectedTopic.id, _loggedInUserId);
               }
             });
             _showSnackbar('Procedure added successfully');
