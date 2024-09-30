@@ -9,6 +9,7 @@ class ProcedureCard extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onRemove; // New: Callback for remove action
   final Widget? titleWidget; // Make this optional
+  final String createdBy;
 
   const ProcedureCard({
     super.key,
@@ -19,6 +20,7 @@ class ProcedureCard extends StatelessWidget {
     required this.onEdit,
     required this.onRemove, // New: Initialize in constructor
     this.titleWidget, // Initialize it in the constructor
+    required this.createdBy,
   });
 
   @override
@@ -70,37 +72,68 @@ class ProcedureCard extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             // Steps with Proper Alignment
-            for (int i = 0; i < procedure.steps.length; i++)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4.0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Number Column with Fixed Width for Alignment
-                    SizedBox(
-                      width: 20, // Fixed width to align numbers
-                      child: Text(
-                        '${i + 1}.',
-                        style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: Colors.grey[700],
-                            fontSize: isDesktop ? 15 : 12),
-                        textAlign:
-                            TextAlign.right, // Align numbers to the right
-                      ),
-                    ),
-                    const SizedBox(width: 8), // Spacing between number and text
-                    // Step Text Expanded to Fill Space
-                    Expanded(
-                      child: Text(
-                        procedure.steps[i],
-                        style: TextStyle(
-                          fontSize: isDesktop ? 15 : 12,
-                          color: Colors.white,
+            Expanded(
+              child: ListView.builder(
+                physics:
+                    const NeverScrollableScrollPhysics(), // To avoid scrolling within the card
+                shrinkWrap: true, // To make it take the minimum space required
+                itemCount: procedure.steps.length,
+                itemBuilder: (context, i) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4.0),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Number Column with Fixed Width for Alignment
+                        SizedBox(
+                          width: 20, // Fixed width to align numbers
+                          child: Text(
+                            '${i + 1}.',
+                            style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey[700],
+                                fontSize: isDesktop ? 15 : 12),
+                            textAlign:
+                                TextAlign.right, // Align numbers to the right
+                          ),
                         ),
-                      ),
+                        const SizedBox(
+                            width: 8), // Spacing between number and text
+                        // Step Text Expanded to Fill Space
+                        Expanded(
+                          child: Text(
+                            procedure.steps[i],
+                            style: TextStyle(
+                              fontSize: isDesktop ? 15 : 12,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 10),
+            // Created by tag - Always at the bottom of the card
+            if (!isPersonal)
+              Align(
+                alignment: Alignment.bottomLeft,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 4.0, horizontal: 8.0),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[800],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'Created by: $createdBy',
+                    style: TextStyle(
+                      fontSize: isDesktop ? 12 : 10,
+                      color: Colors.grey[400],
+                    ),
+                  ),
                 ),
               ),
           ],

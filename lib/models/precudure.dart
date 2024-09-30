@@ -4,7 +4,7 @@ class Procedure {
   List<String> steps;
   String? topicId; // Reference to the related Topic, now a String
   String createdBy;
-  bool? isPersonal;
+  bool isPersonal;
 
   Procedure({
     required this.id,
@@ -12,7 +12,7 @@ class Procedure {
     required this.steps,
     this.topicId,
     required this.createdBy,
-    this.isPersonal,
+    required this.isPersonal,
   });
 
   // Factory constructor for JSON deserialization
@@ -38,13 +38,13 @@ class Procedure {
     };
   }
 
-  Procedure deepCopy() {
+  Procedure deepCopy(String currentUserId) {
     return Procedure(
       id: id,
       title: title,
       steps: List<String>.from(steps), // Create a new list for steps
-      topicId: topicId,
-      createdBy: createdBy,
+      topicId: null,
+      createdBy: currentUserId,
       isPersonal: true
     );
   }
