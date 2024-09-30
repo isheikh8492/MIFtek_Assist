@@ -702,9 +702,10 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
               itemCount: proceduresForTopic.length,
               itemBuilder: (context, index) {
                 final procedure = proceduresForTopic[index];
-
-                // Check if this procedure is the one being highlighted
                 final isHighlighted = procedure.id == _highlightedProcedureId;
+
+                // Resolve the 'createdBy' field to display the user's full name
+                String createdByName = _resolveUserName(procedure.createdBy);
 
                 return AnimatedContainer(
                   duration: const Duration(milliseconds: 500),
@@ -719,16 +720,11 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
                     isDesktop: isDesktop,
                     onBookmark: () async {
                       try {
-                        // Use the FirestoreService to deep copy and save the procedure
                         final newProcedure = await _firestoreService
                             .deepCopyProcedure(procedure, _loggedInUserId);
-
-                        // Update the state with the new procedure
                         setState(() {
                           _procedures.add(newProcedure);
                         });
-                        print(
-                            'procedure on bookmark edit: ${newProcedure.toString()}');
                         _showSnackbar('Procedure bookmarked successfully');
                       } catch (e) {
                         _showSnackbar('Failed to bookmark procedure: $e');
@@ -740,7 +736,7 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
                     onRemove: () {
                       _removeProcedure(procedure);
                     },
-                    createdBy: _userNames[procedure.createdBy] ?? 'Unknown',
+                    createdBy: createdByName,
                     isPersonal: procedure.isPersonal,
                   ),
                 );
@@ -754,4 +750,17 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
             ),
     );
   }
+
+// Function to resolve user name based on user ID
+  String _resolveUserName(String userId) {
+    if (_userNames.containsKey(userId)) {
+      return _userNames[userId]!;
+    } else if (userId == _loggedInUserId) {
+      // If it's the logged-in user, use the full name from SharedPreferences
+      return '${_loggedInFirstName ?? ''} ${_loggedInLastName ?? ''}'.trim();
+    } else {
+      return 'Unknown';
+    }
+  }
+
 }
