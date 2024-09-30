@@ -1,4 +1,6 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:miftek_assist/screens/auth_screen.dart';
 import '../models/precudure.dart';
 import '../models/topic.dart';
 import '../widgets/procedure_card.dart';
@@ -52,7 +54,7 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
     setState(() {
       _loggedInUserId = prefs.getString('userId')!;
       _loggedInFirstName = prefs.getString('firstName');
-      _loggedInFirstName = prefs.getString('lastName');
+      _loggedInLastName = prefs.getString('lastName');
       _loggedInEmail = prefs.getString('email');
     });
     _loadData();
@@ -213,6 +215,23 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
     _showSnackbar('Procedure updated successfully');
   }
 
+  void _logout() async {
+    // Log out from FirebaseAuth
+    await FirebaseAuth.instance.signOut();
+
+    // Clear SharedPreferences
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+
+    // Redirect to login screen
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+          builder: (context) =>
+              AuthScreen()), // Assuming LoginScreen is defined somewhere in your code
+    );
+  }
+
   void highlightProcedure(Procedure procedure) {
     // Find the index of the corresponding topic tab
     int topicIndex =
@@ -265,8 +284,68 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
               );
             },
           ),
+          if (_loggedInFirstName != null && _loggedInLastName != null)
+            Padding(
+              padding: const EdgeInsets.only(
+                  right: 16.0), // Padding added to the right
+              child: PopupMenuButton<int>(
+                icon: Container(
+                  decoration: BoxDecoration(
+                    border:
+                        Border.all(color: Colors.purple.shade700, width: 1.0),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.account_circle, color: Colors.white),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${_loggedInFirstName!} ${_loggedInLastName!}',
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ),
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: 1,
+                    enabled: false, // Make the email option unselectable
+                    child: ListTile(
+                      leading: const Icon(Icons.email,
+                          color: Color.fromARGB(255, 181, 181, 181)),
+                      title: Text(_loggedInEmail ?? 'No Email',
+                          style: const TextStyle(color: Colors.grey)),
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 2,
+                    child: ListTile(
+                      leading: const Icon(Icons.logout, color: Colors.white),
+                      title: const Text('Log Out',
+                          style: TextStyle(color: Colors.white)),
+                    ),
+                  ),
+                ],
+                onSelected: (value) {
+                  if (value == 2) {
+                    _logout();
+                  }
+                },
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(
+                      10), // Matches the button's borderRadius
+                  side: BorderSide(color: Colors.purple.shade700, width: 1.0),
+                ),
+                color: Colors.purple
+                    .shade900, // Optional: match the background color if desired
+                elevation: 4, // Optional: add elevation for a more 3D look
+              ),
+            ),
         ],
       ),
+      
       body: GestureDetector(
         onTap: () {
           if (_isAddingCategory) {

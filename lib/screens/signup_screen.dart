@@ -16,21 +16,6 @@ class SignUpScreen extends StatelessWidget {
 
   SignUpScreen({super.key, required this.onLoginClicked});
 
-  // Key for storing the next available ID in SharedPreferences
-  static const String nextIdKey = 'next_user_id';
-
-  // Function to get the next user ID from storage
-  Future<int> getNextIdFromStorage() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.getInt(nextIdKey) ?? 0;
-  }
-
-  // Function to save the next user ID to storage
-  Future<void> saveNextIdToStorage(int nextId) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(nextIdKey, nextId);
-  }
-
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -179,9 +164,6 @@ class SignUpScreen extends StatelessWidget {
         password: passwordController.text.trim(),
       );
 
-      // Fetch the latest _nextId from persistent storage
-      int currentId = await getNextIdFromStorage();
-
       // Store user information in Firestore
       await FirebaseFirestore.instance
           .collection('users')
@@ -191,9 +173,6 @@ class SignUpScreen extends StatelessWidget {
         'lastName': lastNameController.text.trim(),
         'email': emailController.text.trim(),
       });
-
-      // Increment the ID and update storage
-      await saveNextIdToStorage(currentId + 1);
 
       Navigator.pushReplacement(
         context,
