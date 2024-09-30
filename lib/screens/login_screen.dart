@@ -108,6 +108,9 @@ class LoginScreen extends StatelessWidget {
     return TextField(
       controller: controller,
       obscureText: obscureText,
+      style: TextStyle(
+        color: Colors.white,
+      ),
       decoration: InputDecoration(
         prefixIcon: Icon(icon, color: Colors.purple),
         labelText: labelText,
