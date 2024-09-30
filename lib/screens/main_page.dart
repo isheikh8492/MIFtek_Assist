@@ -199,8 +199,9 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
     }
   }
 
-  void _editProcedure(String newTitle, List<String> newSteps, int index) async {
-    Procedure procedureToEdit = _procedures[index];
+  void _editProcedure(String newTitle, List<String> newSteps, Procedure procedure) async {
+    Procedure procedureToEdit = procedure;
+    print('procedure to be edited: ${procedureToEdit.toString()}');
     await _firestoreService.editProcedure(
       procedureToEdit.id,
       newTitle,
@@ -211,7 +212,7 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
       procedureToEdit.title = newTitle;
       procedureToEdit.steps = newSteps;
     });
-
+    print('procedure after edit: ${procedureToEdit.toString()}');
     _showSnackbar('Procedure updated successfully');
   }
 
@@ -540,7 +541,6 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
                     _showEditProcedureDialog(
                       context,
                       personalProcedures[index],
-                      index,
                     );
                   },
                   onRemove: () {
@@ -595,7 +595,7 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
 
 
   void _removeProcedure(Procedure procedure) async {
-    await _firestoreService.removeProcedure(procedure.id);
+    await _firestoreService.removeProcedure(procedure);
 
     setState(() {
       _procedures.removeWhere((p) => p.id == procedure.id);
@@ -610,7 +610,7 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
       List<Procedure> proceduresToDelete =
           _procedures.where((p) => p.topicId == topic.id).toList();
       for (var procedure in proceduresToDelete) {
-        await _firestoreService.removeProcedure(procedure.id);
+        await _firestoreService.removeProcedure(procedure);
       }
 
       // Delete the topic itself
@@ -632,14 +632,14 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
 
 
   void _showEditProcedureDialog(
-      BuildContext context, Procedure procedure, int index) {
+      BuildContext context, Procedure procedure) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return EditProcedureDialog(
           procedure: procedure,
           onSave: (String newTitle, List<String> newSteps) {
-            _editProcedure(newTitle, newSteps, index);
+            _editProcedure(newTitle, newSteps, procedure);
           },
         );
       },
@@ -717,19 +717,25 @@ class MainPageState extends State<MainPage> with TickerProviderStateMixin {
                   child: ProcedureCard(
                     procedure: procedure,
                     isDesktop: isDesktop,
-                    onBookmark: () {
-                      setState(() {
-                        if (!_procedures.any((proc) =>
-                            proc.title == procedure.title &&
-                            proc.createdBy == _loggedInUserId &&
-                            proc.isPersonal)) {
-                          // Add a deep copy of the procedure to `_procedures`
-                          _procedures.add(procedure.deepCopy(_loggedInUserId));
-                        }
-                      });
+                    onBookmark: () async {
+                      try {
+                        // Use the FirestoreService to deep copy and save the procedure
+                        final newProcedure = await _firestoreService
+                            .deepCopyProcedure(procedure, _loggedInUserId);
+
+                        // Update the state with the new procedure
+                        setState(() {
+                          _procedures.add(newProcedure);
+                        });
+                        print(
+                            'procedure on bookmark edit: ${newProcedure.toString()}');
+                        _showSnackbar('Procedure bookmarked successfully');
+                      } catch (e) {
+                        _showSnackbar('Failed to bookmark procedure: $e');
+                      }
                     },
                     onEdit: () {
-                      _showEditProcedureDialog(context, procedure, index);
+                      _showEditProcedureDialog(context, procedure);
                     },
                     onRemove: () {
                       _removeProcedure(procedure);

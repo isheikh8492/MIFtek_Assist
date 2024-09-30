@@ -1,5 +1,5 @@
 class Procedure {
-  String id; // Use String for ID, since Firestore document IDs are strings
+  String? id; // Use String for ID, since Firestore document IDs are strings
   String title;
   List<String> steps;
   String? topicId; // Reference to the related Topic, now a String
@@ -7,7 +7,7 @@ class Procedure {
   bool isPersonal;
 
   Procedure({
-    required this.id,
+    this.id,
     required this.title,
     required this.steps,
     this.topicId,
@@ -40,13 +40,17 @@ class Procedure {
 
   Procedure deepCopy(String currentUserId) {
     return Procedure(
-      id: id,
       title: title,
       steps: List<String>.from(steps), // Create a new list for steps
       topicId: null,
       createdBy: currentUserId,
       isPersonal: true
     );
+  }
+
+  @override
+  String toString() {
+    return 'Procedure{id: $id, title: $title, steps: $steps, topicId: $topicId, createdBy: $createdBy, isPersonal: $isPersonal}';
   }
 }
 

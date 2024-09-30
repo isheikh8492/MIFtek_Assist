@@ -136,7 +136,7 @@ class FirestoreService {
 
   // Edit a procedure
   Future<void> editProcedure(
-      String procedureId, String newTitle, List<String> newSteps) async {
+      String? procedureId, String newTitle, List<String> newSteps) async {
     try {
       await _firestore.collection('procedures').doc(procedureId).update({
         'title': newTitle,
@@ -148,9 +148,9 @@ class FirestoreService {
   }
 
   // Remove a procedure
-  Future<void> removeProcedure(String procedureId) async {
+  Future<void> removeProcedure(Procedure procedure) async {
     try {
-      await _firestore.collection('procedures').doc(procedureId).delete();
+      await _firestore.collection('procedures').doc(procedure.id).delete();
     } catch (e) {
       print('Failed to remove procedure: $e');
     }
@@ -162,5 +162,26 @@ class FirestoreService {
     } catch (e) {
       throw Exception('Failed to delete topic: $e');
     }
+  }
+
+  Future<Procedure> deepCopyProcedure(
+      Procedure procedure, String currentUserId) async {
+    // Create a new Procedure instance for deep copying without an ID
+    final newProcedure = Procedure(
+      title: procedure.title,
+      steps: List<String>.from(procedure.steps),
+      topicId: null, // No specific topic for personal bookmarks
+      createdBy: currentUserId,
+      isPersonal: true,
+    );
+
+    // Save the new procedure to Firestore and let Firebase generate the ID
+    DocumentReference docRef =
+        await _firestore.collection('procedures').add(newProcedure.toJson());
+
+    // Assign the generated Firestore ID to the new procedure
+    newProcedure.id = docRef.id;
+
+    return newProcedure;
   }
 }
